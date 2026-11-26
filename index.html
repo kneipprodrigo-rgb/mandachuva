@@ -456,7 +456,10 @@ var troca = (g, gringo = false, demitido = true) => {
 var fila = (g, id, emTemporadas) => g.fila.push({ id, temp: g.temp + emTemporadas });
 var titulo = (g, nome) => { g.st.titulos.push(`${nome} ${g.ano}`); };
 
+// contador de visitas (GoatCounter): só existe na versão publicada como site; aqui vira um aviso de evento
+function evento(path) { try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path, title: path, event: true }); } catch (e) { } }
 function novoJogo(cfg) {
+  if (!cfg.teste) evento(cfg.diario ? 'jogo-iniciado-desafio-do-dia' : 'jogo-iniciado');
   if (cfg.seed != null) R = mulberry(cfg.seed); else R = mulberry((Date.now() ^ Math.floor(Math.random() * 1e9)) % 2147483647);
   const cen = CENARIOS[cfg.cen];
   G = {
@@ -1393,7 +1396,7 @@ function introPartida(g, m, cb) {
     <p class="jg-need">${esc(necessidade(m))}</p>
     ${m.dica ? `<p class="nota">Relatório do analista ${esc(m.dica.nome)} ${estrelas(m.dica.est)}: "${esc(m.dica.txt)}"</p>` : ''}
     <div class="acoes"><button class="bt am" id="assiste" type="button">Assistir ao jogo</button><button class="bt vz" id="segue" type="button">Só o resultado</button></div>`, () => cb(false));
-  $('#assiste').onclick = () => { fechaTelao(); cb(true); };
+  $('#assiste').onclick = () => { evento('assistiu-jogo-decisivo'); fechaTelao(); cb(true); };
   setTimeout(() => { const b = $('#assiste'); if (b) b.focus({ preventScroll: true }); }, 60);
 }
 function itemFeed(m, ev, rot) {
@@ -1983,7 +1986,7 @@ function apelido(g) {
 }
 let ultimoTexto = '', ultimaImg = null;
 function fim(tipo) {
-  const g = G; g.fim = tipo;
+  const g = G; g.fim = tipo; evento('fim-' + tipo);
   const [tit, desc] = FINAIS[tipo];
   const anos = `${g.ano0}–${Math.max(g.ano, g.ano0)}`, ap = apelido(g), pts = placar(g), [rar, rarTxt] = raridade(pts);
   const grandes = g.st.titulos.length;
@@ -2014,6 +2017,7 @@ function fim(tipo) {
     <p id="msgFim" class="nota"></p><textarea class="copia oculto" id="txtCopia" readonly></textarea>`, null);
   desenhaCard(g, { tit, anos, ap, rar }).then(url => { const i = $('#imgFinal'); if (i) i.src = url; });
   $('#btCopiar').onclick = async () => {
+    evento('copiou-resultado');
     try { await navigator.clipboard.writeText(ultimoTexto); $('#msgFim').textContent = 'Copiado. É só colar no X, no WhatsApp ou na legenda.'; }
     catch (e) { const t = $('#txtCopia'); t.classList.remove('oculto'); t.value = ultimoTexto; t.select(); $('#msgFim').textContent = 'Seu navegador não deixou copiar sozinho: selecione o texto abaixo.'; }
   };
@@ -2046,6 +2050,7 @@ function roundRect(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcT
 function quebra(x, t, a, b, w, lh) { let linha = '', y = b; for (const p of t.split(' ')) { const tst = linha ? linha + ' ' + p : p; if (x.measureText(tst).width > w && linha) { x.fillText(linha, a, y); linha = p; y += lh; } else linha = tst; } x.fillText(linha, a, y); }
 async function salvaImagem() {
   if (!ultimaImg) return;
+  evento('salvou-imagem');
   const blob = await new Promise(r => ultimaImg.toBlob(r, 'image/png'));
   const nomeArq = 'minha-gestao-mandachuva.png';
   if (window.claude && window.claude.use) {
@@ -2155,5 +2160,6 @@ window.__mc = { escolhe: l => escolhe(l), G: () => G, novoJogo, carta: () => CAR
   jogo: j => { const g = G, pre = preTemporada(g); pre.jogos = [j]; jogaDecisoes(g, pre, () => telaTemporada(g, fechaTemporada(g, pre))); } };
 }
 </script>
+<script data-goatcounter="https://mandachuva.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
