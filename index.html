@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mandachuva: presidente de clube</title>
+<meta name="description" content="Jogo de navegador: você é o presidente do clube. Contrate a comissão técnica, aguente a torcida e o conselho, assista aos jogos decisivos e sobreviva às eleições.">
+<meta name="theme-color" content="#0f6d3c">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mandachuva: presidente de clube">
+<meta property="og:description" content="Todo torcedor acha que faria melhor. Agora é a sua vez: comande o clube, contrate a comissão e sobreviva às eleições.">
+<meta property="og:image" content="https://kneipprodrigo-rgb.github.io/mandachuva/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'%3E%3Cpath d='M2 2h22v12c0 8-5 12-11 15C7 26 2 22 2 14Z' fill='%23c8102e' stroke='%23ffd21f' stroke-width='2'/%3E%3Cpath d='M13 3v25' stroke='%23ffd21f' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: arquibancada brasileira: rápido, bem-humorado, com cheiro de coletiva de imprensa
+   IDEA: o jogo é um placar de estádio + a mesa da coletiva; cada decisão é uma ficha de papel jogada no gramado
+   PICTURE: a coletiva do novo presidente, com microfones e o painel nas cores do clube (muda ao vivo)
+   COLOUR and TYPE: gramado listrado, giz e papel; amarelo de cartão como destaque; Anton de placar + Barlow
+   LAYOUT: gramado de ponta a ponta; ficha central com as 4 barras no topo; temporada e eleição como telão */
+:root{color-scheme:light dark;
+--g1:light-dark(#0f6d3c,#07351d);--g2:light-dark(#0c6235,#052c18);
+--giz:#f6f3ea;--papel:#fbf8ef;--papel2:#efe9da;--tinta:#151a15;--suave:#5c645a;
+--amarelo:#ffd21f;--vermelho:#e0392b;--c1:#c8102e;--c2:#ffffff;
+--sombra:0 18px 40px rgba(0,0,0,.35)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:72px}
+body{margin:0;color:var(--giz);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip;min-height:100vh;
+  background:repeating-linear-gradient(90deg,var(--g1) 0 90px,var(--g2) 90px 180px)}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--amarelo);outline-offset:2px}
+.oculto{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding:clamp(16px,3vw,32px) max(4vw,14px)}
+.topo{display:flex;align-items:center;gap:12px;padding:12px max(4vw,14px);border-bottom:2px solid rgba(255,255,255,.35)}
+.marca{font:28px/1 Anton,Impact,sans-serif;letter-spacing:.5px;color:var(--giz);text-decoration:none}
+.marca span{color:var(--amarelo)}
+.selo{font:600 13px/1 Barlow,system-ui,sans-serif;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.3);padding:5px 8px;border-radius:999px}
+.topo .dir{margin-left:auto;display:flex;gap:8px}
+.bt{border:0;border-radius:12px;padding:12px 18px;min-height:44px;font-weight:800;font-size:16px}
+.bt.am{background:var(--amarelo);color:var(--tinta)}
+.bt.cl{background:var(--giz);color:var(--tinta)}
+.bt.vz{background:transparent;color:var(--giz);border:2px solid rgba(255,255,255,.6)}
+.bt.tx{background:transparent;color:var(--tinta);border:2px solid var(--tinta)}
+.bt:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- início ---------- */
+.titulo{font:clamp(38px,5.2vw,60px)/.98 Anton,Impact,sans-serif;margin:8px 0 6px;letter-spacing:1px;text-wrap:balance;
+  text-shadow:0 4px 0 rgba(0,0,0,.25)}
+.titulo em{font-style:normal;color:var(--amarelo)}
+.lead{font-size:clamp(17px,2.2vw,21px);max-width:640px;margin:0 0 18px;font-weight:600}
+.inicio-grade{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);grid-template-areas:'cena texto' 'cena form';gap:18px 26px;align-items:start}
+.inicio-grade .texto{grid-area:texto}.inicio-grade .cena{grid-area:cena;position:sticky;top:16px}.inicio-grade form{grid-area:form}
+.cena{background:rgba(0,0,0,.18);border:2px solid rgba(255,255,255,.35);border-radius:18px;overflow:hidden}
+.cena svg{display:block;width:100%;height:auto}
+.ficha-papel{background:var(--papel);color:var(--tinta);border-radius:16px;padding:20px;box-shadow:var(--sombra)}
+.ficha-papel h2{font:26px/1.05 Anton,Impact,sans-serif;margin:0 0 12px;letter-spacing:.3px}
+label.rot{display:block;font:700 14px/1.2 Barlow,system-ui,sans-serif;margin:14px 0 6px;color:var(--suave)}
+input[type=text]{width:100%;font:600 17px Barlow,system-ui,sans-serif;padding:11px 12px;border:2px solid #cfc7b3;border-radius:10px;background:#fff;color:var(--tinta)}
+.cores{display:flex;flex-wrap:wrap;gap:8px}
+.cor{width:44px;height:44px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #cfc7b3;position:relative;overflow:hidden;padding:0}
+.cor i{position:absolute;inset:0 50% 0 0}
+.cor[aria-pressed=true]{box-shadow:0 0 0 3px var(--tinta)}
+.opcoes{display:grid;gap:8px}
+.opc{display:flex;gap:10px;align-items:flex-start;text-align:left;background:#fff;border:2px solid #d9d1bd;border-radius:12px;padding:10px 12px;min-height:44px;color:var(--tinta)}
+.opc b{display:block;font-weight:800}
+.opc small{color:var(--suave);font-size:14px;line-height:1.3}
+.opc[aria-pressed=true]{border-color:var(--tinta);background:#fff7cf}
+.epocas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.epocas .opc{display:block}
+.acoes{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.recorde{margin-top:14px;font-size:14px;color:var(--suave)}
+.como{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:26px}
+.como div{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:14px}
+.como b{display:block;font:20px/1.1 Anton,Impact,sans-serif;color:var(--amarelo);margin-bottom:4px;letter-spacing:.3px}
+
+/* ---------- jogo ---------- */
+.placa{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font:700 15px/1.2 Barlow,system-ui,sans-serif;margin-bottom:12px}
+.placa .clube{font:22px/1 Anton,Impact,sans-serif;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+.escudo{width:26px;height:30px;flex:none}
+.chip.pesq{font-weight:800}.chip.boa{background:#1f7a3a}.chip.meio{background:#8a6d00}.chip.ruim{background:#9b2a20}
+.chip{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 10px;white-space:nowrap}
+.medidores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:520px;margin:0 auto 14px}
+.med{text-align:center;font:700 13px/1.2 Barlow,system-ui,sans-serif}
+.med .ico{position:relative;width:56px;height:56px;margin:0 auto 4px;border-radius:14px;background:rgba(0,0,0,.38);border:2px solid rgba(255,255,255,.35)}
+.med .ico svg{position:absolute;inset:8px;width:36px;height:36px;color:rgba(255,255,255,.16)}
+.med .ico svg.cheio{color:var(--giz);clip-path:inset(calc((100 - var(--v)) * 1%) 0 0 0);transition:clip-path .5s ease}
+.med.perigo .ico svg.cheio{color:#ff6b5e}.med.perigo .ico{border-color:#ff6b5e}
+.med .barra{height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:0 auto 4px;width:56px;overflow:hidden}.med .barra i{display:block;height:100%;width:calc(var(--v)*1%);background:var(--giz);transition:width .5s ease}.med.perigo .barra i{background:#ff6b5e}
+.med .ponto{width:8px;height:8px;border-radius:50%;background:var(--amarelo);margin:4px auto 0;opacity:0;transform:scale(.5);transition:.15s}
+.med .ponto.on{opacity:1;transform:scale(1)}.med .ponto.on.gr{transform:scale(1.7)}
+.med.sobe .ico{animation:sobe .6s}.med.desce .ico{animation:desce .6s}
+@keyframes sobe{40%{box-shadow:0 0 0 6px rgba(255,210,31,.7)}}@keyframes desce{40%{box-shadow:0 0 0 6px rgba(224,57,43,.8)}}
+.mesa{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}
+.palco{position:relative;max-width:460px;margin:0 auto;width:100%}
+.carta{background:var(--papel);color:var(--tinta);border-radius:20px;box-shadow:var(--sombra);padding:18px 18px 20px;touch-action:none;user-select:none;position:relative;will-change:transform;cursor:grab}
+.carta.solta{transition:transform .35s ease,opacity .35s ease}
+.carta .pessoa{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.carta .pessoa svg{width:84px;height:84px;flex:none;border-radius:50%}
+.carta .nome{font:22px/1.05 Anton,Impact,sans-serif;letter-spacing:.3px}
+.carta .papel{font:600 14px/1.2 Barlow,system-ui,sans-serif;color:var(--suave)}
+.carta .fala{font:600 19px/1.4 Barlow,system-ui,sans-serif;margin:6px 0 4px;min-height:5.6em}
+.carta.fato{background:#fff3c4}
+.carta .tagfato{display:inline-block;background:var(--tinta);color:var(--amarelo);font:700 12px/1 Barlow,system-ui,sans-serif;letter-spacing:.06em;padding:5px 8px;border-radius:6px;margin-bottom:6px}
+.carta .lado{position:absolute;top:16px;font:800 15px/1.15 Barlow,system-ui,sans-serif;background:var(--tinta);color:var(--amarelo);padding:8px 10px;border-radius:10px;max-width:58%;opacity:0;pointer-events:none}
+.carta .lado.esq{left:12px}.carta .lado.dir{right:12px;text-align:right}
+.escolhas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:12px}
+.escolhas .bt{width:100%;line-height:1.2}
+.dica{text-align:center;font-size:14px;opacity:.85;margin-top:8px}
+.toast{min-height:26px;text-align:center;font:700 16px/1.3 Barlow,system-ui,sans-serif;margin-top:10px;color:var(--amarelo)}
+.lateral{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:14px}
+.lateral h3{font:20px/1 Anton,Impact,sans-serif;margin:0 0 8px;letter-spacing:.3px}
+.lista{list-style:none;margin:0;padding:0;font-size:15px}
+.lista li{padding:6px 0;border-top:1px dashed rgba(255,255,255,.25);display:flex;gap:8px}
+.lista li b{color:var(--amarelo);flex:none;font-family:'Barlow Condensed',Barlow,system-ui,sans-serif;font-size:16px}
+.numeros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.numeros div{background:rgba(0,0,0,.25);border-radius:10px;padding:8px;text-align:center;font-size:13px;line-height:1.2}
+.numeros b{display:block;font:26px/1 Anton,Impact,sans-serif;color:var(--giz)}
+
+/* ---------- telão (temporada, eleição, fim) ---------- */
+.telao{position:fixed;inset:0;background:rgba(4,20,11,.86);display:grid;place-items:center;padding:16px;z-index:20;overflow:auto}
+.painel{background:#0b0f0c;color:var(--giz);border:3px solid #2b332d;border-radius:20px;width:min(560px,100%);padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.painel .k{font:700 13px/1 Barlow,system-ui,sans-serif;letter-spacing:.12em;color:var(--amarelo);text-transform:uppercase}
+.painel h2{font:clamp(30px,7vw,44px)/1 Anton,Impact,sans-serif;margin:8px 0 12px;letter-spacing:.5px;text-wrap:balance}
+.posicao{display:flex;align-items:center;gap:16px;margin:8px 0 14px}
+.posicao .n{font:clamp(70px,18vw,110px)/.85 Anton,Impact,sans-serif;color:var(--amarelo);font-variant-numeric:tabular-nums}
+.linhas{list-style:none;padding:0;margin:0 0 14px}
+.linhas li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #2b332d;font-weight:600}
+.linhas li span:last-child{text-align:right}
+.linhas li.sub{border-top:0;padding:0 0 8px 14px;font-size:14px;font-weight:500;opacity:.9}.linhas li.sub span:first-child{position:relative}.linhas li.sub span:first-child::before{content:'';position:absolute;left:-10px;top:.15em;width:6px;height:.6em;border-left:2px solid #5c645a;border-bottom:2px solid #5c645a}
+.manchete{background:var(--papel);color:var(--tinta);border-radius:10px;padding:10px 12px;font:700 17px/1.25 Barlow,system-ui,sans-serif;margin-bottom:14px}
+.manchete small{display:block;font:700 11px/1 Barlow,system-ui,sans-serif;letter-spacing:.1em;color:var(--suave);margin-bottom:4px}
+.urna{height:46px;border-radius:10px;overflow:hidden;display:flex;background:#2b332d;margin:12px 0 6px}
+.urna i{display:block;height:100%;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+.urna .voce{background:var(--amarelo)}.urna .opo{background:#7b8a80}
+.legenda{display:flex;justify-content:space-between;font:700 16px Barlow,system-ui,sans-serif}
+.cartao-final{width:100%;max-width:360px;display:block;margin:6px auto 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.grade-fim{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 14px}
+.grade-fim div{background:#151b17;border:1px solid #2b332d;border-radius:10px;padding:10px;text-align:center;font-size:13px}
+.grade-fim b{display:block;font:30px/1 Anton,Impact,sans-serif;color:var(--amarelo)}
+.raridade{display:inline-block;font:700 13px/1 Barlow,system-ui,sans-serif;letter-spacing:.08em;padding:6px 10px;border-radius:999px;background:var(--amarelo);color:var(--tinta)}
+.linha-tempo{max-height:180px;overflow:auto;margin:0 0 14px;padding-right:4px}
+.est{position:relative;display:inline-block;color:rgba(255,255,255,.22);letter-spacing:1px;white-space:nowrap;font-size:16px;line-height:1;vertical-align:-1px}
+.est i{position:absolute;left:0;top:0;overflow:hidden;color:var(--amarelo);font-style:normal;white-space:nowrap}
+.est.cl{font-size:18px}
+.painel.largo{width:min(760px,100%)}
+.topo-janela{display:flex;flex-wrap:wrap;gap:6px 16px;font-weight:700;margin-bottom:6px}
+.explica{font-size:14px;opacity:.85;margin:4px 0 10px}
+.avisos{margin:0 0 12px;padding:10px 12px 10px 28px;background:#1b221d;border-radius:10px;font-size:14px}
+.comissao{display:grid;gap:8px;margin-bottom:14px}
+.membro{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:6px 12px;align-items:center;background:#141a16;border:1px solid #2b332d;border-radius:12px;padding:10px 12px}
+.membro.alerta{border-color:var(--amarelo)}.membro.vago{border-style:dashed}
+.membro .cargo{font:700 15px/1.15 Barlow,system-ui,sans-serif}.membro .cargo small{display:block;font-weight:500;font-size:12px;opacity:.7;margin-top:2px}
+.membro .quem b{font-weight:800}.sub{display:block;font-size:13px;opacity:.8;line-height:1.35}
+.membro .acs,.cand .acs{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.bt.mini{min-height:40px;padding:8px 12px;font-size:14px;border-radius:10px}
+.vence{color:var(--amarelo);font-weight:800}
+.resp{grid-column:1/-1;margin:2px 0 0;font-size:14px;color:var(--amarelo)}
+.mercado{grid-column:1/-1;display:grid;gap:8px;margin-top:6px}
+.cand{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;background:#0b0f0c;border:1px solid #2b332d;border-radius:10px;padding:10px}
+.cand.recusou{opacity:.6}.cand.ok{border-color:var(--amarelo)}
+.i-alto{color:#7ee08a}.i-medio{color:var(--amarelo)}.i-baixo{color:#ffa45c}.i-nada{color:#ff6b5e}
+.lateral .com li span{flex:1}.lateral .com li .est{font-size:13px}
+@media(max-width:600px){.membro{grid-template-columns:minmax(0,1fr)}.membro .acs,.cand .acs{justify-content:flex-start}.cand{grid-template-columns:minmax(0,1fr)}}
+textarea.copia{width:100%;min-height:120px;font:14px/1.4 Barlow,system-ui,sans-serif;border-radius:10px;padding:10px}
+.nota{font-size:13px;opacity:.75;margin-top:12px}
+.plantao{display:flex;gap:12px;align-items:flex-start;background:#151b17;border:1px solid #2b332d;border-radius:12px;padding:12px;margin:0 0 12px}
+.plantao svg{width:64px;height:64px;flex:none;border-radius:50%}
+.plantao b{display:block;font:20px/1.05 Anton,Impact,sans-serif;letter-spacing:.3px}.plantao small{display:block;font-size:13px;opacity:.75}
+.plantao p{margin:6px 0 0;font-weight:600;line-height:1.4}
+.urna.imp{position:relative}.urna .sim{background:var(--vermelho)}.urna .nao{background:var(--amarelo)}
+.urna .corte{position:absolute;top:0;bottom:0;width:3px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+
+/* ---------- jogos decisivos ao vivo ---------- */
+.painel.jogo-largo{width:min(1060px,100%);padding:16px 18px}
+.jg-vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:10px;margin:8px 0 14px;font:21px/1.1 Anton,Impact,sans-serif;letter-spacing:.3px;text-align:center}
+.jg-vs b{display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:400;text-wrap:balance}
+.jg-vs .escudo{width:44px;height:52px}.jg-vs i{font-style:normal;color:var(--amarelo);align-self:center;font-size:26px}.jg-vs small{font:600 13px Barlow,system-ui,sans-serif;opacity:.75;margin-top:-4px}
+.jg-ida{font-weight:700;margin:0 0 6px}
+.jg-need{display:inline-block;background:var(--amarelo);color:var(--tinta);font-weight:800;border-radius:10px;padding:8px 12px;margin:0 0 8px}
+.jg-final{display:flex;justify-content:center;align-items:center;gap:14px;font:64px/1 Anton,Impact,sans-serif;font-variant-numeric:tabular-nums;margin:2px 0 6px}
+.jg-final i{font-style:normal;font-size:.45em;opacity:.6}
+.jogo{display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-areas:'topo topo' 'placar placar' 'sit sit' 'campo lado' 'ctrl lado';gap:10px 16px}
+.jg-topo{grid-area:topo;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.jg-min{font:30px/1 Anton,Impact,sans-serif;color:var(--amarelo);font-variant-numeric:tabular-nums;white-space:nowrap}
+.jg-placar{grid-area:placar;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;background:#151b17;border:1px solid #2b332d;border-radius:14px;padding:10px 14px}
+.jg-time{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:center}
+.jg-time .escudo{grid-row:1/3;width:34px;height:40px}
+.jg-time b{font:26px/1 Anton,Impact,sans-serif;letter-spacing:.5px}
+.jg-time small{font-size:13px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jg-time.dir{grid-template-columns:minmax(0,1fr) auto;text-align:right}.jg-time.dir .escudo{grid-column:2;grid-row:1/3}
+.jg-gols{font:clamp(42px,8vw,60px)/1 Anton,Impact,sans-serif;display:flex;gap:12px;align-items:center;font-variant-numeric:tabular-nums}
+.jg-gols i{font-style:normal;font-size:.45em;opacity:.6}
+.jg-sit{grid-area:sit;margin:0;font-size:15px;font-weight:600;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;justify-content:space-between}
+.jg-sit b{border-radius:999px;padding:4px 12px;font-size:14px;letter-spacing:.03em;background:#2b332d}
+.jg-sit b.ok{background:#1f7a3a}.jg-sit b.ruim{background:#9b2a20}.jg-sit b.pen{background:#8a6d00}
+.jg-campo{grid-area:campo;position:relative;border-radius:12px;overflow:hidden;border:2px solid #2b332d;background:#0c6636}
+.jg-campo canvas{display:block;width:100%;height:auto;aspect-ratio:640/380}
+.jg-flash{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font:clamp(40px,9vw,92px)/1 Anton,Impact,sans-serif;letter-spacing:1px;color:var(--amarelo);
+  text-shadow:0 4px 0 rgba(0,0,0,.55),0 0 24px rgba(0,0,0,.5);opacity:0;text-align:center;padding:0 10px}
+.jg-flash.on{opacity:1;animation:jgFlash 1.5s ease both}.jg-flash.deles{color:var(--giz)}.jg-flash.verm{color:#ff6b5e}.jg-flash.var,.jg-flash.apito{color:var(--giz)}
+.jg-flash.campeao{animation-name:jgCampeao}
+@keyframes jgFlash{0%{opacity:0;transform:scale(.6)}14%{opacity:1;transform:scale(1.1)}24%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+@keyframes jgCampeao{0%{opacity:0;transform:scale(.6)}14%{opacity:1;transform:scale(1.1)}24%,100%{opacity:1;transform:scale(1)}}
+.jg-pen{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:rgba(11,15,12,.88);border-radius:999px;padding:5px 14px;font:700 15px Barlow,system-ui,sans-serif;white-space:nowrap}
+.jg-ctrl{grid-area:ctrl;display:flex;flex-wrap:wrap;gap:8px 10px;justify-content:space-between;align-items:center;min-height:44px}
+.jg-vel{display:flex;gap:6px}.jg-vel .bt[aria-pressed=true]{background:var(--giz);color:var(--tinta)}
+.jg-lado{grid-area:lado;position:relative;min-height:260px}
+.jg-lado h3{font:18px/1 Anton,Impact,sans-serif;letter-spacing:.3px;margin:0 0 6px}
+.jg-lado .jg-feed{position:absolute;top:26px;left:0;right:0;bottom:0;margin:0;max-height:none}
+.jg-feed{list-style:none;margin:0 0 12px;padding:0;max-height:240px;overflow:auto}
+.jg-feed li{display:grid;grid-template-columns:2.9em auto minmax(0,1fr);gap:8px;align-items:center;padding:7px 4px 7px 8px;border-bottom:1px solid #1d2420;border-left:4px solid transparent;font-size:14px;line-height:1.3}
+.jg-feed li b{font:600 15px 'Barlow Condensed',Barlow,system-ui,sans-serif;color:var(--amarelo);font-variant-numeric:tabular-nums;white-space:nowrap}
+.jg-feed li:first-child{animation:jgEntra .35s ease}
+@keyframes jgEntra{from{background:rgba(255,210,31,.18)}}
+.jt{font:800 11px/1 Barlow,system-ui,sans-serif;letter-spacing:.05em;padding:5px 7px;border-radius:5px;background:#2b332d;color:var(--giz);white-space:nowrap}
+.jt.gol{background:var(--amarelo);color:var(--tinta)}.jt.verm{background:var(--vermelho)}.jt.am{background:transparent;box-shadow:inset 0 0 0 2px #ffd21f;color:#ffd21f}
+.jt.var{background:#2a6fd6}.jt.pen{background:#ff6a13;color:var(--tinta)}.jt.trave{background:var(--giz);color:var(--tinta)}.jt.apito{background:transparent;box-shadow:inset 0 0 0 1px #5c645a}
+.jg-vest{width:100%;background:#151b17;border:2px solid var(--amarelo);border-radius:12px;padding:12px}
+.jg-vest > b{display:block;font-size:15px;line-height:1.35}
+.jg-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.jg-opts .bt{display:flex;flex-direction:column;align-items:flex-start;text-align:left;line-height:1.2;gap:2px}
+.jg-opts .bt small{font-weight:600;font-size:12px;opacity:.85}
+.jg-fim{flex:1 1 260px;border-radius:12px;padding:10px 12px;background:#151b17;border:2px solid #2b332d}
+.jg-fim b{display:block;font:24px/1.05 Anton,Impact,sans-serif;letter-spacing:.3px}.jg-fim span{font-size:14px;opacity:.9}
+.jg-fim.ok{border-color:var(--amarelo)}.jg-fim.ok b{color:var(--amarelo)}.jg-fim.ruim b{color:#ff6b5e}
+@media(max-width:860px){.jogo{grid-template-columns:minmax(0,1fr);grid-template-areas:'topo' 'placar' 'sit' 'campo' 'ctrl' 'lado'}
+  .jg-lado{min-height:0}.jg-lado .jg-feed{position:static;max-height:230px}}
+@media(max-width:600px){.painel.jogo-largo{padding:12px}.jg-time small{display:none}.jg-time b{font-size:22px}.jg-opts{grid-template-columns:minmax(0,1fr)}.jg-sit{font-size:14px}.jg-min{font-size:26px}}
+
+@media(max-width:860px){.inicio-grade,.mesa{grid-template-columns:minmax(0,1fr)}.inicio-grade{grid-template-areas:'texto' 'cena' 'form'}.inicio-grade .cena{position:static}}
+@media(max-width:600px){.epocas{grid-template-columns:minmax(0,1fr)}.topo .selo{display:none}.carta .fala{font-size:18px}
+  .medidores{gap:6px}.med .ico{width:50px;height:50px}.med .ico svg{inset:7px;width:32px;height:32px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="#inicio">MANDA<span>CHUVA</span></a>
+  <span class="selo">protótipo jogável</span>
+  <div class="dir"><button class="bt vz" id="btComo" type="button">Como jogar</button></div>
+</header>
+
+<main class="wrap">
+  <!-- INÍCIO -->
+  <section id="telaInicio">
+    <div class="inicio-grade">
+      <div class="texto"><h1 class="titulo">Todo torcedor acha que faria melhor. <em>Agora é a sua vez.</em></h1>
+      <p class="lead">Você é o novo presidente do clube. Contrate, venda, demita, aguente a organizada e sobreviva às eleições. Cada gestão dura de 2 a 4 minutos.</p></div>
+      <div class="cena" id="cena" aria-label="Coletiva de imprensa do novo presidente"></div>
+      <form class="ficha-papel" id="form" autocomplete="off">
+        <h2>Ficha de posse</h2>
+        <label class="rot" for="inNome">Seu nome</label>
+        <input type="text" id="inNome" maxlength="24" placeholder="Seu nome">
+        <label class="rot" for="inClube">Nome do clube</label>
+        <input type="text" id="inClube" maxlength="28" value="Atlético Cachoeira">
+        <span class="rot">Cores do clube</span>
+        <div class="cores" id="cores"></div>
+        <span class="rot">Situação do clube</span>
+        <div class="opcoes" id="cenarios"></div>
+        <span class="rot">Começar em</span>
+        <div class="epocas" id="epocas"></div>
+        <div class="acoes">
+          <button class="bt am" type="submit">Assumir o clube</button>
+          <button class="bt tx" type="button" id="btDiario">Desafio do dia</button>
+        </div>
+        <p class="recorde" id="recorde"></p>
+      </form>
+    </div>
+    <div class="como" id="comoBox">
+      <div><b>Deslize a ficha</b>Arraste para um lado ou toque no botão. Cada escolha mexe nas barras.</div>
+      <div><b>4 barras</b>Caixa, torcida, elenco e conselho. Zerou uma, você cai (conselho zerado abre impeachment). Duas no máximo também encerram a carreira, com uma história.</div>
+      <div><b>Temporada</b>A cada 3 decisões, o campeonato roda. Finais e última rodada decidida você assiste ao vivo, minuto a minuto.</div>
+      <div><b>Eleição</b>A cada 3 anos tem eleição no clube. O máximo são 5 mandatos.</div>
+      <div><b>Rival</b>Todo ano tem clássico, ida e volta. Ganhar do rival vale torcida e voto na eleição.</div>
+      <div><b>Comissão técnica</b>No fim de cada temporada: renove contratos, demita ou contrate. De 0,5 a 5 estrelas, e os bons nem sempre querem vir.</div>
+    </div>
+  </section>
+
+  <!-- JOGO -->
+  <section id="telaJogo" class="oculto">
+    <div class="placa" id="placa"></div>
+    <div class="medidores" id="medidores"></div>
+    <div class="mesa">
+      <div>
+        <div class="palco">
+          <article class="carta" id="carta" tabindex="0" aria-live="polite"></article>
+          <div class="escolhas"><button class="bt cl" id="opE" type="button"></button><button class="bt am" id="opD" type="button"></button></div>
+          <p class="dica">Arraste a ficha para os lados, toque num botão ou use ← e →.</p>
+          <p class="toast" id="toast"></p>
+        </div>
+      </div>
+      <aside class="lateral">
+        <h3>Sua gestão</h3>
+        <div class="numeros" id="numeros"></div>
+        <h3>Comissão técnica</h3>
+        <ul class="lista com" id="comissaoLat"></ul>
+        <h3 style="margin-top:12px">Linha do tempo</h3>
+        <ul class="lista" id="historico"></ul>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<div class="telao oculto" id="telao" role="dialog" aria-modal="true"><div class="painel" id="painel"></div></div>
+
+<script>
+{
+/* ===================== UTILIDADES ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let R = mulberry(Date.now() % 2147483647);
+const VEL = () => (window.__VEL ?? 1);
+var rint = (a, b) => a + Math.floor(R() * (b - a + 1));
+var pick = l => l[Math.floor(R() * l.length)];
+const clamp = (x, a = 0, b = 100) => Math.max(a, Math.min(b, x));
+const guarda = {
+  ler(k, d) { try { const v = localStorage.getItem('mandachuva:' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  gravar(k, v) { try { localStorage.setItem('mandachuva:' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const hoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const hashTxt = s => { let h = 2166136261; for (const ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+
+/* ===================== DADOS DO JOGO ===================== */
+const CORES = [['#c8102e', '#ffffff'], ['#111111', '#ffffff'], ['#0b3d91', '#ffffff'], ['#0a7a3a', '#ffffff'], ['#6b1d2f', '#f2c14e'],
+  ['#ff6a13', '#111111'], ['#5b2a86', '#ffffff'], ['#f2c400', '#0b3d91'], ['#c8102e', '#111111'], ['#2a8fd6', '#ffffff']];
+const CENARIOS = {
+  gigante: { nome: 'Gigante endividado', desc: 'Série A, torcida enorme, cofre vazio.', serie: 'A', m: { c: 24, t: 62, e: 58, k: 44 }, divida: 900 },
+  medio: { nome: 'Clube médio', desc: 'Série A, contas em dia, 20 anos sem título.', serie: 'A', m: { c: 50, t: 46, e: 48, k: 56 }, divida: 250 },
+  pequeno: { nome: 'Pequeno do interior', desc: 'Série C, estádio de 8 mil lugares, sonho grande.', serie: 'C', m: { c: 52, t: 52, e: 38, k: 60 }, divida: 15 },
+};
+const EPOCAS = { 1989: 'Hiperinflação, Plano Collor e o real', 2010: 'Copa no Brasil, VAR, pandemia e SAF', 2027: 'Hoje: SAF e Copa feminina no Brasil' };
+const METROS = [['c', 'Caixa'], ['t', 'Torcida'], ['e', 'Elenco'], ['k', 'Conselho']];
+const ICONES = {
+  c: '<svg viewBox="0 0 32 32"><ellipse cx="16" cy="9" rx="11" ry="4.5" fill="currentColor"/><path d="M5 9v6c0 2.5 4.9 4.5 11 4.5S27 17.5 27 15V9c0 2.5-4.9 4.5-11 4.5S5 11.5 5 9Z" fill="currentColor"/><path d="M5 16v7c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5v-7c0 2.5-4.9 4.5-11 4.5S5 18.5 5 16Z" fill="currentColor"/></svg>',
+  t: '<svg viewBox="0 0 32 32"><path d="M7 3h3v27H7z" fill="currentColor"/><path d="M10 4c5-3 9 3 17 0v13c-8 3-12-3-17 0Z" fill="currentColor"/></svg>',
+  e: '<svg viewBox="0 0 32 32"><path d="M11 3 3 7l3 7 3-1v16h14V13l3 1 3-7-8-4c-1 2.5-3 4-5 4s-4-1.5-5-4Z" fill="currentColor"/></svg>',
+  k: '<svg viewBox="0 0 32 32"><path d="m13 4 8 8-3 3-8-8Z" fill="currentColor"/><path d="M15.5 13.5 5 24l3 3 10.5-10.5Z" fill="currentColor"/><rect x="16" y="25" width="13" height="4" rx="1" fill="currentColor"/></svg>',
+};
+const PELES = ['#f1c9a8', '#dea47c', '#b87a55', '#8b5637', '#5d3a25'];
+const TEC1 = ['Osmar', 'Valdir', 'Cláudio', 'Hélio', 'Marcão', 'Nivaldo', 'Rogerinho', 'Toninho', 'Jairo', 'Wanderley'];
+const TEC2 = ['Bezerra', 'Lacerda', 'Moura', 'Pimentel', 'Rangel', 'Tavares', 'Viana', 'Dorneles', 'Quaresma', 'Fagundes'];
+const GRINGOS = ['Klaus Wernicke', 'Mateo Ibarguren', 'Tomás Varela', 'Ivo Sandrelli', 'Ruben Castanheira'];
+const CRAQUES = ['Wellington Trator', 'Dedé Canhão', 'Kaio Faísca', 'Rodrigão Muralha', 'Léo Bicicleta', 'Pablo Chapéu', 'Jhonatan Raio', 'Everton Pipoca', 'Marquinhos Tabela'];
+const CLUBES_DIA = ['Atlético Cachoeira', 'União Serra Azul', 'Esporte Clube Ventania', 'Operário da Várzea', 'Ferroviário do Cerrado', 'Real Beira-Mar', 'Grêmio Esperança', 'Sociedade Esportiva Garoa'];
+const PERS = {
+  vice: { nome: 'Dr. Arlindo', papel: 'vice de futebol', a: { p: 1, cab: 'grisalho', roupa: '#2f3b52', ex: ['gravata', 'bigode'], h: 'serio' } },
+  tesoureira: { nome: 'Neusa Pimentel', papel: 'diretora financeira', a: { p: 3, cab: 'longo', roupa: '#6a2c3e', ex: ['oculos'], h: 'serio' } },
+  conselheiro: { nome: 'Seu Altamiro', papel: 'conselheiro há 40 anos', a: { p: 0, cab: 'careca', roupa: '#3d3a35', ex: ['oculos', 'gravata'], h: 'bravo' } },
+  organizada: { nome: 'Bigode', papel: 'líder da organizada', a: { p: 2, cab: 'bone', roupa: 'clube', ex: ['cachecol', 'bigode'], h: 'bravo' } },
+  empresario: { nome: 'Marcelinho Contratos', papel: 'empresário de jogadores', a: { p: 1, cab: 'curto', roupa: '#1d1d1d', ex: ['escuros', 'celular'], h: 'sorri' } },
+  capitao: { nome: 'Tião', papel: 'capitão do time', a: { p: 4, cab: 'crespo', roupa: 'clube', ex: ['bracadeira'], h: 'serio' } },
+  jornalista: { nome: 'Cláudia Prates', papel: 'repórter', a: { p: 2, cab: 'longo', roupa: '#1f5f8b', ex: ['mic'], h: 'serio' } },
+  investidor: { nome: 'Mr. Bradley', papel: 'fundo de investimento', a: { p: 0, cab: 'curto', roupa: '#10233f', ex: ['gravata', 'escuros'], h: 'sorri' } },
+  assessor: { nome: 'Kauã', papel: 'assessor de imprensa', a: { p: 3, cab: 'crespo', roupa: '#2d6a4f', ex: ['fone'], h: 'sorri' } },
+  medico: { nome: g => g.com.med ? g.com.med.nome : 'Dr. Paulo', papel: 'médico do clube', a: { p: 1, cab: 'grisalho', roupa: '#f4f4f4', ex: ['estetoscopio'], h: 'serio' } },
+  torcedor: { nome: 'Seu Zé da Bandeira', papel: 'torcedor-símbolo', a: { p: 3, cab: 'bone', roupa: 'clube', ex: ['bigode'], h: 'sorri' } },
+  vidente: { nome: 'Madame Estrela', papel: 'vidente', a: { p: 2, cab: 'longo', roupa: '#4b2a6b', ex: ['estrela'], h: 'sorri' } },
+  influencer: { nome: 'Lipe Gameplays', papel: 'influencer', a: { p: 1, cab: 'bone', roupa: '#ff5a1f', ex: ['celular'], h: 'sorri' } },
+  patrocinador: { nome: 'Rogério Alves', papel: 'diretor de marketing', a: { p: 2, cab: 'curto', roupa: '#555b61', ex: ['gravata'], h: 'sorri' } },
+  prefeito: { nome: 'O prefeito', papel: 'prefeitura da cidade', a: { p: 1, cab: 'grisalho', roupa: '#22303c', ex: ['gravata'], h: 'sorri' } },
+  joia: { nome: 'Juninho Foguete', papel: 'joia da base, 17 anos', a: { p: 4, cab: 'crespo', roupa: 'clube', ex: ['numero'], h: 'sorri' } },
+  tecnico: { nome: g => g.tecnico.nome, papel: 'técnico', a: { p: 'tec', cab: 'curto', roupa: '#2a2f36', ex: ['apito'], h: 'serio' } },
+  analista: { nome: g => g.com.ana ? g.com.ana.nome : 'Analista', papel: 'analista de desempenho', a: { p: 0, cab: 'curto', roupa: '#33415c', ex: ['oculos', 'fone'], h: 'sorri' } },
+  preparador: { nome: g => g.com.fis ? g.com.fis.nome : 'Preparador', papel: 'preparador físico', a: { p: 3, cab: 'careca', roupa: '#1d6f42', ex: ['apito'], h: 'serio' } },
+  rivalpres: { nome: 'Dr. Getúlio Barreto', papel: g => `presidente do ${g.rival.nome}`, a: { p: 0, cab: 'grisalho', roupa: '#202020', ex: ['gravata', 'oculos'], gravata: 'rival', h: 'sorri' } },
+  roupeiro: { nome: 'Seu Nonato', papel: 'roupeiro há 30 anos', a: { p: 3, cab: 'careca', roupa: '#4a4f55', ex: ['bigode'], h: 'sorri' } },
+  narrador: { nome: 'Zé Carlos Microfone', papel: 'narrador da rádio local', a: { p: 1, cab: 'curto', roupa: '#7a3e1d', ex: ['fone', 'bigode'], h: 'sorri' } },
+  craque: { nome: g => g.craque, papel: 'camisa 10 e ídolo do time', a: { p: 2, cab: 'curto', roupa: 'clube', ex: ['numero'], num: 10, h: 'serio' } },
+  goleiro: { nome: 'Paredão', papel: 'goleiro', a: { p: 1, cab: 'careca', roupa: '#2b2b2b', ex: ['numero'], num: 1, h: 'serio' } },
+  fato: { nome: 'Fato histórico', papel: 'aconteceu de verdade', a: 'jornal' },
+  federacao: { nome: 'Coronel Lauro Bastos', papel: 'chefe das federações estaduais', a: { p: 0, cab: 'grisalho', roupa: '#1c2a44', ex: ['gravata', 'bigode'], h: 'sorri' } },
+  cacatalentos: { nome: 'Helena Vasconcelos', papel: 'caçadora de executivos', a: { p: 2, cab: 'longo', roupa: '#2b2d42', ex: ['oculos'], h: 'sorri' } },
+  carnavalesco: { nome: 'Mestre Purpurina', papel: 'carnavalesco da escola de samba', a: { p: 4, cab: 'crespo', roupa: '#7b2cbf', ex: ['estrela'], h: 'sorri' } },
+};
+
+/* ===================== DESENHOS ===================== */
+function avatar(a, g, semFundo) {
+  if (a === 'jornal') return `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="58" fill="#151a15"/><rect x="26" y="30" width="68" height="62" rx="4" fill="#fbf8ef"/><rect x="32" y="37" width="56" height="9" fill="#151a15"/><rect x="32" y="51" width="26" height="22" fill="#ffd21f"/><g fill="#9a978d"><rect x="62" y="51" width="26" height="4"/><rect x="62" y="59" width="26" height="4"/><rect x="62" y="67" width="20" height="4"/><rect x="32" y="78" width="56" height="4"/></g></svg>`;
+  const c1 = g ? g.cores[0] : 'var(--c1)', c2 = g ? g.cores[1] : 'var(--c2)';
+  const pele = a.p === 'tec' ? PELES[(g && g.tecnico.pele) ?? 1] : PELES[a.p];
+  const roupa = a.roupa === 'clube' ? c1 : a.roupa;
+  let h = semFundo ? '' : `<circle cx="60" cy="60" r="58" fill="${a.roupa === 'clube' ? '#e9e3d2' : '#e5dfcf'}"/>`;
+  h += `<path d="M12 122C14 94 33 85 60 85s46 9 48 37Z" fill="${roupa}"/>`;
+  if (a.ex.includes('estetoscopio')) h += `<path d="M44 88c-2 14 6 22 16 22s18-8 16-22" fill="none" stroke="#555" stroke-width="3"/><circle cx="60" cy="110" r="4" fill="#777"/>`;
+  if (a.ex.includes('gravata')) h += `<path d="M47 85 60 98 73 85Z" fill="#fff"/><path d="M56.5 87h7l-2 5 4 20-6 6-6-6 4-20Z" fill="${a.gravata === 'rival' && g && g.rival ? g.rival.cores[0] : a.roupa === '#10233f' ? '#b8860b' : c1}"/>`;
+  if (a.ex.includes('numero') || a.ex.includes('bracadeira')) h += `<text x="60" y="114" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="20" fill="${c2}">${a.num ?? (a.ex.includes('numero') ? '17' : '5')}</text>`;
+  if (a.ex.includes('bracadeira')) h += `<rect x="86" y="97" width="16" height="7" rx="2" fill="#ffd21f" transform="rotate(-28 94 100)"/>`;
+  h += `<rect x="51" y="70" width="18" height="18" rx="7" fill="${pele}"/><ellipse cx="38.5" cy="53" rx="4" ry="6" fill="${pele}"/><ellipse cx="81.5" cy="53" rx="4" ry="6" fill="${pele}"/><ellipse cx="60" cy="50" rx="22" ry="25" fill="${pele}"/>`;
+  const cabs = {
+    curto: `<path d="M38 46c-2-25 46-25 44 0-4-10-12-15-22-15s-18 5-22 15Z" fill="#2b1d14"/>`,
+    grisalho: `<path d="M38 50c-3-14 2-24 10-27 6-2 18-2 24 0 8 3 13 13 10 27-2-8-4-12-6-14 0 4-3 3-16 3s-16 1-16-3c-2 2-4 6-6 14Z" fill="#c9c5bd"/>`,
+    careca: `<path d="M38.5 52c0-7 2-11 5-13v12ZM81.5 52c0-7-2-11-5-13v12Z" fill="#a7a39b"/>`,
+    crespo: `<path d="M36 47c-6-22 12-31 24-26 12-5 30 4 24 26-3-9-12-14-24-14s-21 5-24 14Z" fill="#1d1410"/><circle cx="44" cy="27" r="7" fill="#1d1410"/><circle cx="60" cy="22" r="8" fill="#1d1410"/><circle cx="76" cy="27" r="7" fill="#1d1410"/>`,
+    longo: `<path d="M35 55c-4-34 54-34 50 0l2 26c-6-6-6-18-8-30-8-12-30-12-38 0-2 12-2 24-8 30Z" fill="#3a2516"/>`,
+    bone: `<path d="M37 43c0-25 46-25 46 0Z" fill="${a.roupa === 'clube' ? c2 : '#1d1d1d'}"/><path d="M60 40 100 43v5L60 46Z" fill="${a.roupa === 'clube' ? c2 : '#1d1d1d'}"/><path d="M37 43h46" stroke="${c1}" stroke-width="3"/>`,
+  };
+  h += cabs[a.cab] || '';
+  h += `<circle cx="51" cy="52" r="2.7" fill="#1b1b1b"/><circle cx="69" cy="52" r="2.7" fill="#1b1b1b"/>`;
+  h += a.h === 'bravo' ? `<path d="M45 44l10 4M75 44l-10 4" stroke="#2a211b" stroke-width="3" stroke-linecap="round"/>` : `<path d="M45 45l9-1.5M66 43.5l9 1.5" stroke="#2a211b" stroke-width="2.6" stroke-linecap="round"/>`;
+  h += { sorri: `<path d="M51 63c5 5 13 5 18 0" fill="none" stroke="#5a2a1d" stroke-width="3" stroke-linecap="round"/>`, bravo: `<path d="M51 66c5-4 13-4 18 0" fill="none" stroke="#5a2a1d" stroke-width="3" stroke-linecap="round"/>`, serio: `<path d="M52 64h16" stroke="#5a2a1d" stroke-width="3" stroke-linecap="round"/>` }[a.h];
+  if (a.ex.includes('bigode')) h += `<path d="M49 60c5-4 17-4 22 0-5 3-17 3-22 0Z" fill="#2b1d14"/>`;
+  if (a.ex.includes('oculos')) h += `<g fill="none" stroke="#222" stroke-width="2.4"><circle cx="51" cy="52" r="6.5"/><circle cx="69" cy="52" r="6.5"/><path d="M57.5 52h5"/></g>`;
+  if (a.ex.includes('escuros')) h += `<path d="M43 47h14l-1 8h-12ZM63 47h14l-1 8h-12Z" fill="#111"/><path d="M57 49h6" stroke="#111" stroke-width="2"/>`;
+  if (a.ex.includes('celular')) h += `<rect x="80" y="44" width="10" height="18" rx="2" fill="#222"/>`;
+  if (a.ex.includes('mic')) h += `<rect x="77" y="72" width="7" height="24" rx="3" fill="#333"/><circle cx="80.5" cy="69" r="7" fill="#555"/><rect x="74" y="78" width="13" height="8" fill="${c1}"/>`;
+  if (a.ex.includes('apito')) h += `<path d="M50 86 58 101" stroke="#333" stroke-width="2"/><rect x="55" y="99" width="13" height="7" rx="3" fill="#c9c9c9"/>`;
+  if (a.ex.includes('fone')) h += `<path d="M37 50c0-28 46-28 46 0" fill="none" stroke="#222" stroke-width="4"/><rect x="32" y="46" width="9" height="13" rx="3" fill="#222"/><rect x="79" y="46" width="9" height="13" rx="3" fill="#222"/><path d="M36 58c2 8 8 10 14 9" fill="none" stroke="#222" stroke-width="2"/>`;
+  if (a.ex.includes('cachecol')) h += `<path d="M41 80c10 9 28 9 38 0l3 9c-12 10-32 10-44 0Z" fill="${c1}"/><path d="M42 85c10 8 26 8 36 0" stroke="${c2}" stroke-width="3" fill="none"/>`;
+  if (a.ex.includes('estrela')) h += `<path d="M22 30l2 5 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1ZM96 24l1.5 4 4 .5-3 2.5 1 4-3.5-2-3.5 2 1-4-3-2.5 4-.5Z" fill="#ffd21f"/>`;
+  return `<svg viewBox="0 0 120 120" aria-hidden="true">${h}</svg>`;
+}
+function escudo(c1, c2) {
+  return `<svg class="escudo" viewBox="0 0 26 30" aria-hidden="true"><path d="M2 2h22v12c0 8-5 12-11 15C7 26 2 22 2 14Z" fill="${c1}" stroke="${c2}" stroke-width="2"/><path d="M13 3v25" stroke="${c2}" stroke-width="4"/></svg>`;
+}
+function siglas(nome) { return (nome.trim().split(/\s+/).filter(w => w.length > 2 || /^[A-Z]/.test(w)).map(w => w[0]).join('').slice(0, 3) || 'FC').toUpperCase(); }
+function cenaColetiva(nome, clube, c1, c2) {
+  const sg = esc(siglas(clube));
+  let painel = '';
+  for (let y = 0; y < 4; y++) for (let x = 0; x < 6; x++) {
+    const px = 20 + x * 90 + (y % 2) * 45, py = 34 + y * 50;
+    painel += (x + y) % 2 ? `<text x="${px}" y="${py}" font-family="Anton,Impact,sans-serif" font-size="22" fill="${c2}" opacity=".9">${sg}</text>` : `<g transform="translate(${px - 4} ${py - 22})">${escudoBruto(c1, c2)}</g>`;
+  }
+  const pres = avatar({ p: 2, cab: 'grisalho', roupa: '#1e2329', ex: ['gravata'], h: 'sorri' }, { cores: [c1, c2], tecnico: {} }, true);
+  const mics = [[200, '#e0392b'], [236, '#1f5f8b'], [272, '#ffd21f'], [308, '#111'], [344, '#0a7a3a']].map(([x, cor], i) =>
+    `<g transform="rotate(${(i - 2) * 9} ${x} 300)"><rect x="${x - 3}" y="236" width="6" height="64" fill="#2b2b2b"/><rect x="${x - 9}" y="226" width="18" height="24" rx="9" fill="#3a3a3a"/><rect x="${x - 12}" y="248" width="24" height="14" rx="3" fill="${cor}"/></g>`).join('');
+  return `<svg viewBox="0 0 540 380" role="img" aria-label="Coletiva do presidente">
+    <rect width="540" height="380" fill="${c1}"/>
+    <g opacity=".95">${painel}</g>
+    <rect y="196" width="540" height="10" fill="${c2}" opacity=".6"/>
+    <g transform="translate(170 90) scale(1.7)">${pres.replace(/<\/?svg[^>]*>/g, '')}</g>
+    <path d="M40 300h460l-18 80H58Z" fill="#20252b"/><rect x="40" y="290" width="460" height="16" fill="#2f363e"/>
+    ${mics}
+    <rect x="190" y="318" width="160" height="34" rx="4" fill="#fbf8ef"/>
+    <text x="270" y="341" text-anchor="middle" font-family="Barlow,sans-serif" font-weight="800" font-size="16" fill="#151a15">${esc((nome || 'PRESIDENTE').toUpperCase().slice(0, 18))}</text>
+    <rect x="400" y="262" width="22" height="28" rx="3" fill="#cfe6f5" opacity=".85"/>
+  </svg>`;
+}
+function escudoBruto(c1, c2) { return `<path d="M2 2h22v12c0 8-5 12-11 15C7 26 2 22 2 14Z" fill="${c1}" stroke="${c2}" stroke-width="2"/><path d="M13 3v25" stroke="${c2}" stroke-width="4"/>`; }
+
+/* ===================== ESTADO ===================== */
+let G = null;
+const SERIES = ['A', 'B', 'C', 'D'];
+const DIF = { A: 51, B: 41, C: 31, D: 23 };
+var troca = (g, gringo = false, demitido = true) => {
+  if (demitido) g.st.tecnicos++;
+  if (gringo) { g.com.tec = novoMembro('tec', pick([3.5, 4, 4.5]), { gringo: true, contrato: 2 }); registraContratacao(g, g.com.tec); }
+  else g.com.tec = null; // o auxiliar assume como interino até a janela
+  sincTec(g);
+  if (g.flags.estavel && demitido) { g.m.t = clamp(g.m.t - 6); g.flags.estavel = 0; }
+};
+var fila = (g, id, emTemporadas) => g.fila.push({ id, temp: g.temp + emTemporadas });
+var titulo = (g, nome) => { g.st.titulos.push(`${nome} ${g.ano}`); };
+
+function novoJogo(cfg) {
+  if (cfg.seed != null) R = mulberry(cfg.seed); else R = mulberry((Date.now() ^ Math.floor(Math.random() * 1e9)) % 2147483647);
+  const cen = CENARIOS[cfg.cen];
+  G = {
+    nome: cfg.nome || 'Presidente', clube: cfg.clube || 'Atlético Cachoeira', cores: cfg.cores, cen: cfg.cen, ano0: cfg.ano, ano: cfg.ano,
+    serie: cen.serie, m: { ...cen.m }, divida: cen.divida, divida0: cen.divida, mandato: 1, anoMandato: 1, temp: 0, cartaNaTemp: 0,
+    tecnico: null, com: comissaoInicial(cfg.cen), flags: {}, fila: [], usados: {}, ultimo: null, diario: cfg.diario || null, hist: [], fim: null,
+    st: { titulos: [], tecnicos: 0, contratacoes: 0, vendas: 0, rebaixamentos: 0, acessos: 0, decisoes: 0, melhor: null, melhorContratacao: null, organizada: 0, gringos: 0, vices: 0, classicos: { v: 0, e: 0, d: 0 }, decisivas: { j: 0, v: 0, marcante: null } },
+  };
+  { const curto = n => n.replace(/^(Atlético|União|Esporte Clube|Operário da|Ferroviário do|Real|Grêmio|Sociedade Esportiva) /, '');
+    const nomes = CLUBES_DIA.map(curto).filter(n => !G.clube.toLowerCase().includes(n.toLowerCase())), cores = CORES.filter(c => c[0] !== G.cores[0]);
+    G.rival = { nome: pick(nomes), cores: pick(cores), forca: G.m.e - 2 + rint(-3, 3), ultimoTitulo: null };
+    G.craque = pick(CRAQUES); }
+  sincTec(G);
+  document.documentElement.style.setProperty('--c1', G.cores[0]); document.documentElement.style.setProperty('--c2', G.cores[1]);
+  $('#telaInicio').classList.add('oculto'); $('#telaJogo').classList.remove('oculto');
+  desenhaMedidores(); placa(); lateral(); proximaCarta(); window.scrollTo(0, 0);
+}
+
+/* ===================== CARTAS ===================== */
+/* ===================== CARTAS DE DECISÃO =====================
+   q: quem fala (chave de PERS) · x: situação · c: condição · w: peso · u: só uma vez por carreira
+   o: [esquerda, direita] · cada opção: l (rótulo), f (efeito nas barras: c caixa, t torcida,
+   e elenco, k conselho), a (ação extra), r (o que aconteceu) */
+const CARTAS = [
+  // ---------- técnico ----------
+  { id: 'tec_pressao', q: 'organizada', w: g => g.ultimo && g.ultimo.ruim ? 4 : 1,
+    x: g => `Três derrotas seguidas. A arquibancada inteira canta "burro" para o técnico ${g.tecnico.nome}.`,
+    o: [{ l: 'Banca o técnico', f: { t: -10, k: 4, e: 3 }, r: 'Você deu "voto de confiança". A torcida não gostou.' },
+        { l: 'Demite na hora', f: { c: -6, t: 10, e: -4 }, a: g => troca(g), r: 'Multa paga. O auxiliar assume como interino até a janela.' }] },
+  { id: 'tec_gringo', q: 'vice', c: g => g.serie !== 'D',
+    x: 'Um técnico estrangeiro famoso topa vir. O salário é em euro e ele quer cinco auxiliares.',
+    o: [{ l: 'Fica com o atual', f: { c: 2, k: 4, e: -2 } },
+        { l: 'Contrata o gringo', f: { c: -14, t: 10, e: 8, k: -3 }, a: g => troca(g, true), r: 'Coletiva com tradutor e muita expectativa.' }] },
+  { id: 'tec_exige', q: 'tecnico', c: g => !!g.com.tec, x: g => `${g.tecnico.nome} quer três reforços. "Sem isso, não tem como", disse ele em coletiva.`,
+    o: [{ l: 'Deixa ele ir embora', f: { e: -6, t: -4 }, a: g => troca(g, false, false), r: 'Saiu atirando contra a diretoria. O auxiliar assume.' },
+        { l: 'Dá os reforços', f: { c: -12, e: 10 }, a: g => g.st.contratacoes += 3 }] },
+  { id: 'tec_retranca', q: 'tecnico', c: g => !!g.com.tec, x: g => `${g.tecnico.nome} armou uma retranca. O time ganha, mas a torcida chama de "futebol de resultado".`,
+    o: [{ l: 'Pede time ofensivo', f: { e: -4, t: 6 } }, { l: 'Resultado é o que importa', f: { t: -5, e: 5 } }] },
+  { id: 'tec_rede', q: 'assessor', w: g => g.st.tecnicos >= 4 ? 2 : 0,
+    x: g => `Viralizou um meme: "${g.clube}, o clube que troca de técnico mais do que de camisa".`,
+    o: [{ l: 'Ignora', f: { t: -4, k: -2 } }, { l: 'Promete estabilidade', f: { k: 5, t: 2 }, a: g => g.flags.estavel = 1, r: 'Se demitir o próximo, a imprensa vai lembrar.' }] },
+
+  // ---------- comissão técnica ----------
+  { id: 'com_interino', q: 'organizada', c: g => !g.com.tec && g.cartaNaTemp === 0, w: 3,
+    x: g => `O interino ${g.tecnico.nome.replace(' (interino)', '')} ganhou dois jogos seguidos. A torcida canta o nome dele.`,
+    o: [{ l: 'Espera a janela', f: { t: -3 } },
+        { l: 'Efetiva o interino', f: { t: 6, c: -2 }, a: g => { const a = g.com.aux; if (a) { g.com.tec = novoMembro('tec', a.est, { gringo: false, contrato: 1 }); g.com.tec.nome = a.nome; g.com.tec.pele = a.pele; g.com.aux = null; sincTec(g); } }, r: 'Agora o cargo de auxiliar ficou vago.' }] },
+  { id: 'com_aux_tec', q: 'tecnico', c: g => !!g.com.tec, u: 1, x: g => `${g.tecnico.nome} quer trazer o auxiliar de confiança dele, que trabalha com ele há 10 anos.`,
+    o: [{ l: 'Mantém o atual', f: { k: 2, e: -2 } },
+        { l: 'Aceita', f: { c: -3, e: 2 }, a: g => { g.com.aux = novoMembro('aux', clamp(g.com.tec.est - 0.5, 0.5, 5), { contrato: g.com.tec.contrato || 1 }); } , r: 'Auxiliar novo. Se o técnico sair, ele costuma ir junto.' }] },
+  { id: 'com_fis_proposta', q: 'preparador', c: g => g.com.fis && g.com.fis.est >= 2.5, u: 1, x: 'Recebi proposta de um clube do Oriente Médio. Pagam o triplo.',
+    o: [{ l: 'Libera', f: { c: 4, e: -2 }, a: g => { g.com.fis = null; }, r: 'O cargo fica vago até a janela.' },
+        { l: 'Cobre a proposta', f: { c: -4, k: -2 }, a: g => { g.com.fis.sal = +(g.com.fis.sal * 1.4).toFixed(2); g.com.fis.contrato++; } }] },
+  { id: 'com_med_centro', q: 'medico', u: 1, x: 'Precisamos de um centro de recuperação moderno. Hoje o gelo vem do bar da esquina.',
+    o: [{ l: 'Fica para depois', f: { e: -2 } }, { l: 'Investe', f: { c: -8, e: 3 }, a: g => { if (g.com.med) g.com.med.est = clamp(meio(g.com.med.est + 0.5), 0.5, 5); }, r: 'Departamento médico ganha meia estrela.' }] },
+  { id: 'com_ana_drone', q: 'analista', c: g => !!g.com.ana, u: 1, x: 'Descobri como o rival bate escanteio. Se liberar um drone, filmo o treino deles inteiro.',
+    o: [{ l: 'Proíbe', f: { k: 3 } }, { l: 'Libera o drone', f: { e: 4, k: -6, t: 3 }, r: 'Ganhamos o clássico. E viramos manchete por espionagem.' }] },
+  { id: 'com_fofoca', q: 'jornalista', c: g => !!g.com.tec && g.com.tec.est >= 3.5, x: g => `Fontes dizem que ${g.tecnico.nome} conversou com a seleção de outro país.`,
+    o: [{ l: 'Confia no técnico', f: { k: 2, t: -3 } }, { l: 'Antecipa a renovação', f: { c: -5 }, a: g => { g.com.tec.contrato += 2; g.com.tec.sal = +(g.com.tec.sal * 1.2).toFixed(2); }, r: 'Mais dois anos de contrato, com aumento.' }] },
+
+  // ---------- elenco ----------
+  { id: 'medalhao', q: 'empresario', x: 'Um medalhão de 34 anos quer voltar ao Brasil. "Ainda tenho lenha para queimar", garante.',
+    o: [{ l: 'Dispensa', f: { t: -6, k: 3 } },
+        { l: 'Contrata o ídolo', f: { c: -15, t: 14, e: 6 }, a: g => { g.st.contratacoes++; fila(g, 'medalhao_lesao', 1); } }] },
+  { id: 'medalhao_lesao', q: 'medico', u: 1, x: 'O medalhão sentiu a coxa no aquecimento. Pela quarta vez no ano.',
+    o: [{ l: 'Rescinde o contrato', f: { c: -4, t: -6, e: -3 } }, { l: 'Paga tratamento na Europa', f: { c: -6, e: 3 } }] },
+  { id: 'joia', q: 'joia', u: 1, w: g => 0.5 + est(g, 'bas') / 2, x: 'Um clube europeu oferece R$ 120 milhões pela joia da base, de 17 anos.',
+    o: [{ l: 'Vende a joia', f: { c: 25, t: -12, e: -6 }, a: g => g.st.vendas++, r: 'Dinheiro em caixa. A torcida chorou na rede social.' },
+        { l: 'Segura o garoto', f: { k: -6, e: 6, t: 8 }, a: g => fila(g, 'joia_explode', 2) }] },
+  { id: 'joia_explode', q: 'joia', u: 1, x: 'O garoto que você segurou fez três gols no clássico. A Europa voltou com o dobro da oferta.',
+    o: [{ l: 'Renova até 2045', f: { c: -8, t: 12, e: 7 } }, { l: 'Vende agora', f: { c: 35, t: -6, e: -8 }, a: g => g.st.vendas++ }] },
+  { id: 'novo_craque', q: 'empresario', x: 'Ofereço "o novo craque do futebol". Você nunca viu ele jogar, só um vídeo de melhores momentos.',
+    o: [{ l: 'Pede para ver um treino', f: { k: 3 } },
+        { l: 'Contrata no escuro', f: g => ({ c: -10, e: rint(-8, 14) }), a: g => g.st.contratacoes++, r: 'Agora é torcer.' }] },
+  { id: 'argentinos', q: 'empresario', x: 'Pacote promocional: três jogadores argentinos pelo preço de um. "Garra garantida."',
+    o: [{ l: 'Recusa', f: { k: 2 } }, { l: 'Fecha o pacote', f: { c: -9, e: 7, t: 4 }, a: g => g.st.contratacoes += 3 }] },
+  { id: 'goleiro', q: 'organizada', x: 'O goleiro falhou nos três gols da derrota. A torcida exige outro.',
+    o: [{ l: 'Confia nele', f: { t: -8, e: 2 } }, { l: 'Contrata goleiro', f: { c: -8, e: 5, t: 5 }, a: g => g.st.contratacoes++ }] },
+  { id: 'salario', q: 'capitao', c: g => g.m.c < 35, w: 3, x: 'Os salários estão dois meses atrasados. O elenco ameaça não entrar em campo.',
+    o: [{ l: 'Pede paciência', f: { e: -10, t: -4 } },
+        { l: 'Pega empréstimo no banco', f: { c: 12, k: -8 }, a: g => g.divida += 80, r: 'Juros altos. Dívida maior.' }] },
+  { id: 'artilheiro', q: 'empresario', c: g => g.m.e > 35, x: 'Um clube do Oriente Médio oferece uma fortuna pelo seu artilheiro.',
+    o: [{ l: 'Recusa', f: { c: -3, e: 3, t: 6 } }, { l: 'Vende', f: { c: 22, e: -9, t: -10 }, a: g => g.st.vendas++ }] },
+  { id: 'balada', q: 'jornalista', x: 'O camisa 10 foi filmado numa festa às 4 da manhã, na véspera da semifinal.',
+    o: [{ l: 'Abafa o caso', f: { e: 2, t: -6 } }, { l: 'Multa e afasta', f: { k: 4, e: -4, t: 2 } }] },
+  { id: 'gramado', q: 'capitao', x: 'O gramado do estádio virou um pasto. O time tropeça dentro de casa.',
+    o: [{ l: 'Pinta de verde', f: { c: -1, t: -6, e: -2 }, r: 'A imprensa descobriu a tinta.' }, { l: 'Troca o gramado', f: { c: -8, e: 4 } }] },
+
+  // ---------- torcida ----------
+  { id: 'org_ingresso', q: 'organizada', x: 'A organizada quer 2 mil ingressos de graça por jogo. "É pelo apoio."',
+    o: [{ l: 'Nega', f: { t: -8, k: 6 }, a: g => fila(g, 'org_protesto', 0) }, { l: 'Dá os ingressos', f: { c: -6, t: 8, k: -6 }, a: g => g.st.organizada++ }] },
+  { id: 'org_protesto', q: 'organizada', u: 1, x: 'Protesto no CT. Jogaram rojão no muro e picharam "FORA" com o seu nome.',
+    o: [{ l: 'Chama a polícia', f: { t: -8, k: 6 } }, { l: 'Recebe os líderes', f: { t: 6, k: -8 }, a: g => g.st.organizada++ }] },
+  { id: 'ingresso', q: 'tesoureira', x: 'O ingresso está caro e o estádio vive vazio.',
+    o: [{ l: 'Mantém o preço', f: { c: 5, t: -8 } }, { l: 'Baixa o preço', f: { c: -6, t: 10 } }] },
+  { id: 'camisa', q: 'patrocinador', x: 'A camisa nova tem uma estampa "conceito" que ninguém entendeu. Já está na fábrica.',
+    o: [{ l: 'Volta ao clássico', f: { c: -4, t: 8 } }, { l: 'Lança mesmo assim', f: { c: 8, t: -6 }, r: 'Virou meme. E vendeu bem.' }] },
+  { id: 'socio', q: 'tesoureira', u: 1, x: 'Lançar um programa de sócio-torcedor com desconto e prioridade no ingresso?',
+    o: [{ l: 'Agora não', f: { t: -3 } }, { l: 'Lança o programa', f: { c: 6, t: 6, k: 2 }, a: g => g.flags.socio = 1 }] },
+  { id: 'mascote', q: 'assessor', x: 'Em votação na internet, a torcida escolheu trocar o mascote por uma capivara.',
+    o: [{ l: 'Mantém o tradicional', f: { t: -4, k: 4 } }, { l: 'Viva a capivara', f: { t: 10, k: -4 } }] },
+  { id: 'cativa', q: 'torcedor', x: 'Vou a todos os jogos há 50 anos. Quero uma cadeira cativa vitalícia, com meu nome.',
+    o: [{ l: 'Nega', f: { t: -8 } }, { l: 'Dá a cadeira', f: { t: 8, c: -1 } }] },
+  { id: 'aeroporto', q: 'organizada', c: g => g.ultimo && g.ultimo.ruim, x: 'Depois da eliminação, a torcida promete "recepção" no aeroporto.',
+    o: [{ l: 'Sai escondido pela garagem', f: { t: -6, e: 2 } }, { l: 'Encara a torcida', f: { t: 6, k: -3, e: -3 } }] },
+  { id: 'cachorro', q: 'assessor', x: 'Um cachorro invadiu o campo e o time virou o jogo logo depois. A torcida quer adotá-lo.',
+    o: [{ l: 'Devolve ao dono', f: { t: -2 } }, { l: 'Vira mascote oficial', f: { t: 8, c: -1 } }] },
+  { id: 'live', q: 'assessor', x: 'Que tal uma live por semana respondendo à torcida?',
+    o: [{ l: 'Prefere o silêncio', f: { t: -3, k: 2 } }, { l: 'Faz a live', f: { t: 8, k: -4 }, r: 'Você prometeu título ao vivo. Todo mundo gravou.' }] },
+
+  // ---------- conselho e política do clube ----------
+  { id: 'contas', q: 'conselheiro', w: g => g.m.c < 40 ? 2 : 1, x: 'O Conselho Fiscal reprovou as contas do ano. "Gastança irresponsável."',
+    o: [{ l: 'Ignora o parecer', f: { k: -12 } }, { l: 'Corta gastos', f: { c: 10, e: -6, k: 8 } }] },
+  { id: 'vice_rebelde', q: 'vice', x: 'Seu vice de futebol deu entrevista dizendo que "faria muito melhor" que você.',
+    o: [{ l: 'Faz as pazes', f: { k: 6, t: -2 } }, { l: 'Demite o vice', f: { k: -8, t: 3 } }] },
+  { id: 'estatuto', q: 'conselheiro', u: 1, x: 'Seus aliados querem mudar o estatuto para permitir reeleições sem limite.',
+    o: [{ l: 'Recusa', f: { k: 6, t: 4 } }, { l: 'Apoia a mudança', f: { k: -10, t: -8 }, a: g => g.flags.vitalicio = 1, r: 'Agora você pode ficar além de 5 mandatos.' }] },
+  { id: 'auditoria', q: 'jornalista', x: 'Uma auditoria independente quer abrir as contas do clube.',
+    o: [{ l: 'Barra a auditoria', f: { k: -6, t: -6 } }, { l: 'Abre tudo', f: { k: 8, c: -3, t: 4 } }] },
+  { id: 'emprestimo', q: 'conselheiro', c: g => g.m.c < 50, x: 'Empresto dinheiro meu ao clube. Em troca, quero nomear o diretor de futebol.',
+    o: [{ l: 'Recusa', f: { k: 3 } }, { l: 'Aceita', f: { c: 15, k: -10 }, a: g => g.divida += 40 }] },
+  { id: 'promessa', q: 'assessor', c: g => g.anoMandato === 3, w: 3, x: 'Ano de eleição no clube. A oposição promete "um camisa 10 de seleção".',
+    o: [{ l: 'Promete responsabilidade', f: { k: 6, t: -4 } }, { l: 'Promete algo maior', f: { t: 10, k: -6 }, r: 'Promessa feita. Agora é cumprir.' }] },
+  { id: 'excursao', q: 'vice', x: 'Diretores querem levar as famílias na viagem da Libertadores, tudo pago pelo clube.',
+    c: g => g.flags.lib, o: [{ l: 'Proíbe', f: { k: -8, t: 4 } }, { l: 'Libera', f: { k: 8, c: -6, t: -8 } }] },
+
+  // ---------- dinheiro e negócios ----------
+  { id: 'patro_misterio', q: 'patrocinador', u: 1, x: 'Uma empresa que ninguém conhece quer pagar o maior patrocínio da história do clube.',
+    o: [{ l: 'Desconfia', f: { k: 4 } }, { l: 'Assina na hora', f: { c: 20, k: -6 }, a: g => fila(g, 'patro_sumiu', 1) }] },
+  { id: 'patro_sumiu', q: 'jornalista', u: 1, x: 'A patrocinadora sumiu. O site saiu do ar e o dinheiro da segunda parcela não caiu.',
+    o: [{ l: 'Abafa o caso', f: { k: -8, t: -4 } }, { l: 'Vai à Justiça', f: { c: -3, k: 3 } }] },
+  { id: 'naming', q: 'patrocinador', u: 1, x: 'Uma marca de colchões quer dar nome ao estádio por 10 anos.',
+    o: [{ l: 'Mantém o nome histórico', f: { t: 6, c: -2 } }, { l: 'Vende o nome', f: { c: 14, t: -8 }, a: g => g.flags.naming = 1 }] },
+  { id: 'saf', q: 'investidor', u: 1, c: g => g.ano >= 2021 && !g.flags.saf, w: g => g.m.c < 35 ? 3 : 1,
+    x: 'Nosso fundo quer comprar 90% do futebol do clube como SAF. Pagamos as dívidas e investimos no elenco.',
+    o: [{ l: 'Recusa', f: { k: 6, c: -4 } },
+        { l: 'Vende como SAF', f: g => ({ c: 40, e: 10, k: -14, t: rint(-10, 10) }), a: g => { g.flags.saf = 1; g.divida = Math.round(g.divida * 0.4); }, r: 'Dívida renegociada. Quem manda no futebol agora é o fundo.' }] },
+  { id: 'saf_corte', q: 'investidor', c: g => g.flags.saf, w: 2, x: 'Como dono da SAF, quero cortar a folha e vender metade da base.',
+    o: [{ l: 'Briga com o dono', f: { k: 6, c: -8, t: 6 } }, { l: 'Concorda', f: { c: 10, e: -10, t: -8 } }] },
+  { id: 'estadio', q: 'prefeito', u: 1, x: 'A reforma do estádio sai cara, mas aumenta a renda de todos os jogos.',
+    o: [{ l: 'Adia', f: { t: -3 } }, { l: 'Reforma', f: { c: -20, t: 8 }, a: g => g.flags.estadio = 1 }] },
+  { id: 'ct', q: 'capitao', u: 1, x: 'Nosso CT tem goteira no vestiário. A base treina num campo de terra.',
+    o: [{ l: 'Fica para depois', f: { e: -3 } }, { l: 'Constrói CT moderno', f: { c: -14, e: 6 }, a: g => g.flags.ct = 1 }] },
+  { id: 'serie_doc', q: 'assessor', u: 1, c: g => g.ano >= 2016, x: 'Uma plataforma de streaming quer filmar uma série nos bastidores do clube.',
+    o: [{ l: 'Recusa', f: { k: 2 } }, { l: 'Libera as câmeras', f: { c: 8, t: 4, k: -4 }, a: g => fila(g, 'doc_vazou', 1) }] },
+  { id: 'doc_vazou', q: 'jornalista', u: 1, x: 'A série mostrou você xingando o técnico no vestiário. Virou o meme da semana.',
+    o: [{ l: 'Processa a plataforma', f: { c: -5, k: 3, t: -4 } }, { l: 'Ri de si mesmo', f: { t: 6, k: -2 } }] },
+  { id: 'influencer', q: 'influencer', c: g => g.ano >= 2015, x: 'Quero jogar 10 minutos num amistoso oficial do clube. Levo meus 8 milhões de seguidores.',
+    o: [{ l: 'Recusa', f: { t: 2, k: 2 } }, { l: 'Topa', f: { c: 6, t: -6, k: -4 }, r: 'Ele perdeu um gol sem goleiro. Milhões de visualizações.' }] },
+
+  // ---------- imprensa e arbitragem ----------
+  { id: 'arbitro', q: 'jornalista', x: 'O juiz anulou um gol legítimo no clássico. Na coletiva, você...',
+    o: [{ l: 'Fala com calma', f: { t: -6, k: 5 } }, { l: 'Detona a arbitragem', f: { t: 10, k: -4, c: -3 }, r: 'Multa do tribunal esportivo. A torcida amou.' }] },
+  { id: 'var', q: 'capitao', c: g => g.ano >= 2019, x: 'O VAR levou nove minutos para anular nosso gol na final.',
+    o: [{ l: 'Pede o áudio do VAR', f: { k: 3, t: 4 } }, { l: 'Pede o fim do VAR', f: { t: 6, k: -4 } }] },
+  { id: 'denuncia', q: 'jornalista', x: 'Tenho documentos de que o clube esconde dívidas. O senhor comenta?',
+    o: [{ l: 'Bloqueia a repórter', f: { t: -4, k: -6 } }, { l: 'Mostra os números', f: { k: 6, t: 2 } }] },
+  { id: 'vidente', q: 'vidente', x: 'O clube só será campeão se o presidente usar a mesma gravata a temporada inteira.',
+    o: [{ l: 'Ignora', f: {} }, { l: 'Usa a gravata', f: { t: 4 }, a: g => g.flags.gravata = (g.flags.gravata || 0) + 1, r: 'Cheiro questionável. Sorte também.' }] },
+
+  // ---------- base, social e feminino ----------
+  { id: 'peneira', q: 'capitao', u: 1, x: 'A peneira da base recebeu 3 mil garotos. Dá para ampliar as categorias?',
+    o: [{ l: 'Mantém como está', f: {} }, { l: 'Amplia a base', f: { c: -5, e: 3 }, a: g => g.flags.base = 1 }] },
+  { id: 'social', q: 'prefeito', u: 1, x: 'A prefeitura propõe abrir o clube para aulas gratuitas de esporte no bairro.',
+    o: [{ l: 'Não', f: { k: 1 } }, { l: 'Abre o clube', f: { c: -3, t: 6, k: 3 } }] },
+  { id: 'feminino', q: 'tesoureira', u: 1, c: g => g.ano >= 2024 && g.ano <= 2027,
+    x: 'A Copa do Mundo feminina de 2027 será no Brasil. Investir de verdade no time feminino?',
+    o: [{ l: 'Agora não', f: { t: -4 } }, { l: 'Investe', f: { c: -8, t: 8 }, a: g => g.flags.feminino = 1 }] },
+  { id: 'feminino_final', q: 'capitao', u: 1, c: g => g.flags.feminino, x: 'O time feminino chegou à final do Brasileiro. Jogo no estádio principal?',
+    o: [{ l: 'Joga no CT', f: { t: -6 } }, { l: 'Abre o estádio', f: g => ({ c: -2, t: 10 }), a: g => { if (R() < 0.5) titulo(g, 'Brasileiro Feminino'); } }] },
+
+  // ---------- FATOS HISTÓRICOS (aconteceram de verdade) ----------
+  { id: 'f_hiper', q: 'fato', c: g => g.ano >= 1989 && g.ano <= 1993, u: 1, x: 'Hiperinflação: os preços sobem quase todo dia e o dinheiro parado no caixa do clube perde valor.',
+    o: [{ l: 'Gasta logo em reforços', f: { c: -6, e: 8 } }, { l: 'Aplica no banco todo dia', f: { c: 6, k: -2 } }] },
+  { id: 'f_collor', q: 'fato', c: g => g.ano === 1990, u: 1, x: 'Março de 1990: o Plano Collor bloqueia por 18 meses boa parte do dinheiro das contas e da poupança. O caixa do clube fica preso.',
+    o: [{ l: 'Atrasa salários', f: { e: -10, t: -4 } }, { l: 'Pega empréstimo com conselheiro', f: { c: 8, k: -10 }, a: g => g.divida += 60 }] },
+  { id: 'f_real', q: 'fato', c: g => g.ano === 1994, u: 1, x: 'Julho de 1994: chega o real e a inflação despenca. Dá, enfim, para planejar as contas.',
+    o: [{ l: 'Aproveita e contrata', f: { c: -8, e: 8 } }, { l: 'Renegocia as dívidas', f: { c: 8, k: 6 } }] },
+  { id: 'f_tetra', q: 'fato', c: g => g.ano === 1994, u: 1, x: 'Julho de 1994: o Brasil é tetracampeão mundial nos Estados Unidos. A cidade inteira está na rua.',
+    o: [{ l: 'Segue o trabalho', f: { k: 3 } }, { l: 'Festa no estádio', f: { c: -3, t: 10 } }] },
+  { id: 'f_passe', q: 'fato', c: g => g.ano === 2001, u: 1, x: 'Março de 2001: pela Lei Pelé, acaba o "passe". Jogador com contrato vencido pode sair de graça.',
+    o: [{ l: 'Deixa sair e aposta na base', f: { e: -6, c: 4 } }, { l: 'Renova com todo mundo', f: { c: -10, e: 4 } }] },
+  { id: 'f_corridos', q: 'fato', c: g => g.ano === 2003, u: 1, x: '2003: a Série A passa a ser disputada por pontos corridos. Sem mata-mata, o elenco precisa ser maior.',
+    o: [{ l: 'Confia nos titulares', f: { e: -4 } }, { l: 'Aumenta o elenco', f: { c: -10, e: 8 } }] },
+  { id: 'f_copa2014', q: 'fato', c: g => g.ano === 2014, u: 1, x: '2014: a Copa do Mundo é no Brasil. Seleções querem treinar no seu estádio.',
+    o: [{ l: 'Fecha para reforma', f: { c: -6, t: 4 } }, { l: 'Aluga o estádio', f: { c: 8, t: 2 } }] },
+  { id: 'f_pandemia', q: 'fato', c: g => g.ano === 2020, u: 1, x: '2020: pandemia. Os jogos são sem público e a receita despenca.',
+    o: [{ l: 'Pega empréstimo', f: { c: 10, k: -4 }, a: g => g.divida += 80 }, { l: 'Acordo para reduzir salários', f: { c: 6, e: -4 } }] },
+  { id: 'f_lei_saf', q: 'fato', c: g => g.ano === 2021, u: 1, x: 'Agosto de 2021: é sancionada a lei que permite transformar o futebol do clube em empresa, a SAF.',
+    o: [{ l: 'Mantém associação', f: { k: 6 } }, { l: 'Estuda virar SAF', f: { k: -4, c: 2 }, a: g => fila(g, 'saf', 0) }] },
+];
+
+/* ===================== CARTAS, LOTE 2 =====================
+   Por divisão, rival, torcida, elenco, dinheiro, imprensa, absurdos e mais fatos históricos. */
+const ELITE = g => g.serie === 'A';
+const BAIXO = g => g.serie === 'C' || g.serie === 'D';
+const MEIO = g => g.serie === 'B';
+const REDES = g => g.ano >= 2012;
+const ANTIGO = g => g.ano < 2005;
+const rv = g => g.rival.nome;
+CARTAS.push(
+  // ---------- SÉRIE A ----------
+  { id: 'a_lib_viagem', q: 'vice', c: g => g.flags.lib, x: 'Jogo da Libertadores na altitude, a 3.600 metros. O médico sugere chegar só no dia do jogo.',
+    o: [{ l: 'Vai uma semana antes', f: { c: -5, e: 3 } }, { l: 'Chega no dia', f: { e: -2 }, r: 'O time ficou sem ar no segundo tempo. Literalmente.' }] },
+  { id: 'a_naming_arena', q: 'patrocinador', c: ELITE, x: 'Um banco digital quer ser o patrocinador máster e trocar o verde da camisa pelo roxo da marca.',
+    o: [{ l: 'Cor não se negocia', f: { t: 8, c: -2 } }, { l: 'Aceita o roxo', f: { c: 16, t: -12 } }] },
+  { id: 'a_selecao', q: 'tecnico', c: g => ELITE(g) && !!g.com.tec, x: 'Três jogadores nossos foram convocados para a seleção. Vamos jogar seis rodadas sem eles.',
+    o: [{ l: 'Pede para a CBF liberar um', f: { k: -2, e: 2 } }, { l: 'Comemora a convocação', f: { t: 6, e: -4 } }] },
+  { id: 'a_europa_volta', q: 'empresario', c: ELITE, x: 'Um meia brasileiro de 29 anos quer sair da Europa e voltar ao país. Salário de clube europeu.',
+    o: [{ l: 'Não cabe no orçamento', f: { k: 3 } }, { l: 'Contrata', f: { c: -16, e: 10, t: 8 }, a: g => g.st.contratacoes++ }] },
+  { id: 'a_mundial', q: 'vice', c: g => g.st.titulos.some(t => /Libertadores/.test(t)) && g.flags.mundial == null, u: 1,
+    x: 'Campeões da América! O Mundial de Clubes é em dezembro, e o elenco quer prêmio por fase.',
+    o: [{ l: 'Prêmio só se ganhar', f: { e: -3, k: 4 } }, { l: 'Paga por fase', f: { c: -8, e: 5 }, a: g => { g.flags.mundial = 1; if (R() < 0.25) titulo(g, 'Mundial de Clubes'); } }] },
+  { id: 'a_estadio_lotado', q: 'tesoureira', c: ELITE, x: 'O estádio esgota em 40 minutos para a semifinal. Cambistas vendem ingresso pelo quíntuplo.',
+    o: [{ l: 'Deixa como está', f: { t: -4 } }, { l: 'Ingresso nominal com foto', f: { c: -3, t: 6, k: 2 } }] },
+  { id: 'a_tv_horario', q: 'patrocinador', c: ELITE, x: 'A TV quer o jogo às 21h30 de quarta. O torcedor sai do estádio depois da meia-noite.',
+    o: [{ l: 'Briga pelo horário', f: { t: 5, c: -5 } }, { l: 'Aceita o dinheiro da TV', f: { c: 8, t: -6 } }] },
+  { id: 'a_g4', q: 'capitao', c: g => ELITE(g) && g.cartaNaTemp === 2, x: 'Faltam dez rodadas e estamos colados no G4. O elenco pede "bicho" em dobro por vitória.',
+    o: [{ l: 'Bicho normal', f: { e: -3 } }, { l: 'Bicho em dobro', f: { c: -7, e: 6 } }] },
+  { id: 'a_arbitro_fora', q: 'vice', c: ELITE, x: 'Querem trazer árbitros estrangeiros para o clássico. A federação deixa a decisão com os clubes.',
+    o: [{ l: 'Fica com os daqui', f: { k: 2 } }, { l: 'Pede árbitro de fora', f: { c: -3, t: 4 } }] },
+  { id: 'a_sul_americana', q: 'tecnico', c: g => ELITE(g) && !!g.com.tec && !g.flags.lib, x: 'Vamos poupar titulares na Sul-Americana para focar no Brasileiro?',
+    o: [{ l: 'Joga com tudo', f: { e: -4, t: 4 } }, { l: 'Poupa', f: { e: 3, t: -4 } }] },
+  { id: 'a_patrocinio_manga', q: 'patrocinador', c: ELITE, x: 'Um aplicativo de entrega quer a manga da camisa. Pagam bem, mas o logo é laranja-neon.',
+    o: [{ l: 'Recusa', f: { t: 2 } }, { l: 'Vende a manga', f: { c: 7, t: -3 } }] },
+  { id: 'a_jovem_europa', q: 'empresario', c: ELITE, x: 'Um clube inglês quer seu lateral de 20 anos. Pagam em libra e à vista.',
+    o: [{ l: 'Segura até o fim do ano', f: { e: 3, c: -2 } }, { l: 'Vende', f: { c: 18, e: -5, t: -4 }, a: g => g.st.vendas++ }] },
+  { id: 'a_cobertura', q: 'prefeito', c: g => ELITE(g) && g.flags.estadio, x: 'O estádio reformado ficou lindo, mas a cobertura não protege da chuva. Molha até a tribuna.',
+    o: [{ l: 'Torcedor leva capa', f: { t: -4 } }, { l: 'Refaz a cobertura', f: { c: -8, t: 4 } }] },
+
+  // ---------- SÉRIE B ----------
+  { id: 'b_acesso_obsessao', q: 'organizada', c: MEIO, x: 'A torcida diz que a Série B "não é o nosso lugar". Exige acesso já, custe o que custar.',
+    o: [{ l: 'Pede paciência', f: { t: -6, k: 4 } }, { l: 'Promete o acesso', f: { t: 8, k: -4 }, r: 'Promessa feita em rede nacional.' }] },
+  { id: 'b_viagem_norte', q: 'vice', c: MEIO, x: 'Três jogos fora em uma semana: Belém, Goiânia e Juiz de Fora. Voo fretado ou ônibus?',
+    o: [{ l: 'Ônibus', f: { c: 3, e: -5 } }, { l: 'Voo fretado', f: { c: -6, e: 3 } }] },
+  { id: 'b_tv_menor', q: 'tesoureira', c: MEIO, x: 'Na Série B, a cota de TV caiu pela metade. Precisamos cortar algo.',
+    o: [{ l: 'Corta o elenco', f: { e: -6, c: 6 } }, { l: 'Corta a estrutura', f: { c: 5, k: -4 } }] },
+  { id: 'b_veterano', q: 'empresario', c: MEIO, x: 'Um atacante de 35 anos, artilheiro da Série B em três edições, quer jogar aqui.',
+    o: [{ l: 'Prefere jovens', f: { e: -1 } }, { l: 'Contrata o "especialista em acesso"', f: { c: -6, e: 6, t: 4 }, a: g => g.st.contratacoes++ }] },
+  { id: 'b_gramado_sintetico', q: 'tesoureira', c: g => MEIO(g) || BAIXO(g), x: 'Instalar gramado sintético? Dura anos, mas adversários reclamam.',
+    o: [{ l: 'Grama natural', f: {} }, { l: 'Sintético', f: { c: -6, e: 3, k: -2 } }] },
+
+  // ---------- SÉRIES C e D ----------
+  { id: 'c_onibus', q: 'roupeiro', c: BAIXO, x: 'O ônibus do clube quebrou a caminho do jogo. Estamos parados num posto a 200 km do estádio.',
+    o: [{ l: 'Pede W.O. ao adversário', f: { k: -4, t: -4 } }, { l: 'Aluga vans às pressas', f: { c: -3, e: -2 }, r: 'Chegaram 10 minutos antes. Aquecimento no estacionamento.' }] },
+  { id: 'c_salario_presidente', q: 'tesoureira', c: g => BAIXO(g) && g.m.c < 40, x: 'Para fechar a folha deste mês, só se o senhor emprestar do próprio bolso.',
+    o: [{ l: 'Atrasa a folha', f: { e: -8 } }, { l: 'Põe o próprio dinheiro', f: { c: 8, k: 6 }, r: 'O conselho aplaudiu. Sua família, nem tanto.' }] },
+  { id: 'c_iluminacao', q: 'prefeito', c: BAIXO, x: 'O estádio não tem iluminação para jogo à noite. A TV só transmite se tiver.',
+    o: [{ l: 'Joga às 15h', f: { c: -2 } }, { l: 'Instala refletores', f: { c: -10, t: 4 }, a: g => g.flags.refletores = 1 }] },
+  { id: 'c_jogador_bico', q: 'capitao', c: BAIXO, x: 'Metade do elenco trabalha de motorista de aplicativo de manhã. Chegam cansados ao treino.',
+    o: [{ l: 'Treino só à tarde', f: { e: 2 } }, { l: 'Paga ajuda de custo', f: { c: -6, e: 6 } }] },
+  { id: 'c_empresa_local', q: 'patrocinador', c: BAIXO, x: 'A padaria do bairro quer patrocinar a camisa. Pagam em dinheiro e em pão.',
+    o: [{ l: 'Espera patrocínio maior', f: { c: -1 } }, { l: 'Fecha com a padaria', f: { c: 3, t: 6 }, r: 'Café da manhã garantido no CT.' }] },
+  { id: 'c_vaquinha', q: 'torcedor', c: g => BAIXO(g) && g.m.c < 45, x: 'A torcida quer fazer uma vaquinha on-line para pagar o salário dos jogadores.',
+    o: [{ l: 'Recusa por orgulho', f: { k: 2, c: -1 } }, { l: 'Aceita', f: { c: 6, t: 6, k: -3 } }] },
+  { id: 'c_peneira_tv', q: 'assessor', c: BAIXO, x: 'Um canal quer filmar um reality de peneira no nosso estádio.',
+    o: [{ l: 'Não', f: {} }, { l: 'Topa', f: { c: 5, t: 3, e: 2 } }] },
+  { id: 'c_estadual_grande', q: 'tecnico', c: g => BAIXO(g) && !!g.com.tec, x: 'Vamos enfrentar um gigante no estadual. Jogo da vida para esse elenco.',
+    o: [{ l: 'Poupa para a Série', f: { t: -4, e: 2 } }, { l: 'Vai com tudo', f: g => ({ e: -2, t: R() < 0.35 ? 12 : 2 }), r: 'Noventa minutos de guerra.' }] },
+  { id: 'c_alojamento', q: 'medico', c: BAIXO, x: 'O alojamento da base está com mofo nas paredes. Os garotos vivem gripados.',
+    o: [{ l: 'Mês que vem', f: { e: -3, k: -2 } }, { l: 'Reforma agora', f: { c: -6, e: 2, k: 2 } }] },
+  { id: 'c_radio', q: 'narrador', c: BAIXO, x: 'A rádio local quer transmitir os jogos, mas pede que o clube pague o "custo da linha".',
+    o: [{ l: 'Não paga', f: { t: -3 } }, { l: 'Paga a transmissão', f: { c: -2, t: 5 } }] },
+  { id: 'c_campo_alugado', q: 'tesoureira', c: g => g.serie === 'D', x: 'Nosso estádio não passou na vistoria. Vamos mandar jogos a 80 km daqui.',
+    o: [{ l: 'Joga longe', f: { t: -6, c: -2 } }, { l: 'Faz as obras de emergência', f: { c: -8, t: 3 } }] },
+  { id: 'c_uniforme', q: 'roupeiro', c: BAIXO, x: 'Só temos um jogo de uniforme. Se lavar hoje, não seca para amanhã.',
+    o: [{ l: 'Joga com ele úmido', f: { e: -1, t: -1 } }, { l: 'Compra mais um jogo', f: { c: -2, e: 1 } }] },
+
+  // ---------- RIVAL ----------
+  { id: 'r_idolo', q: 'craque', x: g => `O ${rv(g)} ofereceu o dobro do salário para eu jogar lá. Não queria sair, mas é muito dinheiro.`,
+    o: [{ l: 'Deixa ir', f: { c: 4, e: -6, t: -10 }, a: g => g.rival.forca += 4, r: g => `Ele já posou com a camisa do ${rv(g)}.` }, { l: 'Cobre a oferta', f: { c: -10, e: 2, t: 6 } }] },
+  { id: 'r_pichacao', q: 'organizada', x: g => `A torcida do ${rv(g)} pichou o muro do nosso estádio na véspera do clássico.`,
+    o: [{ l: 'Pinta e segue a vida', f: { k: 3, t: -2 } }, { l: 'Vídeo "aqui é nosso"', f: { t: 7, k: -2 } }] },
+  { id: 'r_estadio', q: 'rivalpres', x: g => `O ${rv(g)} está reformando o estádio deles e quer alugar o nosso por um ano.`,
+    o: [{ l: 'Jamais', f: { t: 6, c: -1 } }, { l: 'Aluga', f: { c: 12, t: -12 } }] },
+  { id: 'r_provocacao', q: 'rivalpres', x: g => `Na TV, o presidente do ${rv(g)} disse que o seu clube é "freguês" e "time de bairro".`,
+    o: [{ l: 'Ignora', f: { k: 3, t: -3 } }, { l: 'Responde à altura', f: { t: 8, k: -4 }, r: 'A troca de farpas virou o assunto da semana.' }] },
+  { id: 'r_horario', q: 'capitao', x: 'A federação marcou o clássico para as 11 da manhã de domingo, com 35 graus.',
+    o: [{ l: 'Aceita', f: { e: -2 } }, { l: 'Protesta', f: { k: -2, t: 3 } }] },
+  { id: 'r_torcida_unica', q: 'prefeito', x: 'Por segurança, a polícia quer o clássico com torcida única.',
+    o: [{ l: 'Apoia', f: { k: 4, t: -3 } }, { l: 'Pede as duas torcidas', f: { t: 4, k: -4 } }] },
+  { id: 'r_mascote', q: 'assessor', x: g => `Nosso mascote brigou com o mascote do ${rv(g)} no aquecimento. O vídeo rodou o mundo.`,
+    o: [{ l: 'Suspende o mascote', f: { k: 3, t: -4 } }, { l: 'Defende o mascote', f: { t: 7, k: -3 } }] },
+  { id: 'r_ex_idolo', q: 'empresario', x: g => `Um ex-ídolo do ${rv(g)} quer jogar aqui. Seria uma provocação histórica.`,
+    o: [{ l: 'Não quer confusão', f: { k: 2 } }, { l: 'Contrata', f: { c: -8, e: 5, t: 5 }, a: g => { g.st.contratacoes++; g.rival.forca -= 2; } }] },
+  { id: 'r_carreata', q: 'organizada', c: g => g.rival.ultimoTitulo === g.ano - 1, x: g => `O ${rv(g)} foi campeão e a carreata deles passou buzinando em frente à nossa sede.`,
+    o: [{ l: 'Fecha a sede e espera', f: { t: -4 } }, { l: 'Outdoor provocando', f: { c: -2, t: 5, k: -2 } }] },
+  { id: 'r_tecnico', q: 'rivalpres', c: g => !!g.com.tec && g.com.tec.est >= 2.5, x: g => `Queremos o seu técnico, ${g.tecnico.nome}. Pagamos a multa inteira.`,
+    o: [{ l: 'Libera e embolsa', f: { c: 8, t: -6 }, a: g => { g.com.tec = null; sincTec(g); g.rival.forca += 3; }, r: 'O auxiliar assume como interino.' },
+        { l: 'Renova com aumento', f: { c: -6, k: 2 }, a: g => { g.com.tec.contrato += 1; g.com.tec.sal = +(g.com.tec.sal * 1.25).toFixed(2); } }] },
+  { id: 'r_jogo_beneficente', q: 'prefeito', x: g => `A prefeitura quer um amistoso beneficente com o ${rv(g)}, renda para os hospitais da cidade.`,
+    o: [{ l: 'Calendário apertado', f: { k: -2 } }, { l: 'Topa', f: { t: 5, k: 4, e: -2 } }] },
+  { id: 'r_troca', q: 'rivalpres', x: g => `O ${rv(g)} propõe uma troca: o seu reserva pelo titular deles que está brigado com a torcida.`,
+    o: [{ l: 'Recusa', f: {} }, { l: 'Aceita a troca', f: g => ({ e: rint(-3, 7), t: -2 }), a: g => g.st.contratacoes++ }] },
+
+  // ---------- TORCIDA ----------
+  { id: 't_bandeirao', q: 'organizada', x: 'Queremos levar um bandeirão de 100 metros. A polícia exige seguro.',
+    o: [{ l: 'Não paga', f: { t: -4 } }, { l: 'Paga o seguro', f: { c: -2, t: 6 }, a: g => g.st.organizada++ }] },
+  { id: 't_vaias', q: 'craque', x: 'A torcida vaiou meu aquecimento. Quero pedir desculpas publicamente, mas também quero respeito.',
+    o: [{ l: 'Diz para ele ficar quieto', f: { e: -3, k: 2 } }, { l: 'Faz uma coletiva juntos', f: { t: 5, e: 3 } }] },
+  { id: 't_ingresso_mulher', q: 'tesoureira', x: 'Campanha: meia-entrada para mulheres e crianças em todos os jogos.',
+    o: [{ l: 'Não', f: {} }, { l: 'Lança a campanha', f: { c: -3, t: 7 } }] },
+  { id: 't_hino', q: 'assessor', x: 'Um cantor famoso quer regravar o hino do clube em versão funk.',
+    o: [{ l: 'Hino é sagrado', f: { t: 3, k: 2 } }, { l: 'Libera a versão', f: { t: -4, c: 5 }, r: 'Os jovens amaram. Os conselheiros, nem um pouco.' }] },
+  { id: 't_treino_aberto', q: 'tecnico', c: g => !!g.com.tec, x: 'A torcida pede um treino aberto antes da decisão.',
+    o: [{ l: 'Treino fechado', f: { e: 2, t: -3 } }, { l: 'Abre o treino', f: { t: 6, e: -1 } }] },
+  { id: 't_reclamacao_comida', q: 'torcedor', x: 'O cachorro-quente do estádio custa R$ 30 e vem frio.',
+    o: [{ l: 'É o preço', f: { c: 2, t: -4 } }, { l: 'Troca a lanchonete', f: { c: -2, t: 5 } }] },
+  { id: 't_cadeira_azul', q: 'organizada', x: 'Na arquibancada nova, as cadeiras são da cor do rival. Ninguém percebeu antes da instalação.',
+    o: [{ l: 'Deixa assim', f: { t: -8, c: 1 } }, { l: 'Troca todas', f: { c: -7, t: 7 } }] },
+  { id: 't_sócio_atraso', q: 'tesoureira', c: g => g.flags.socio, x: 'O sistema do sócio-torcedor caiu na venda da final. Milhares sem ingresso.',
+    o: [{ l: 'Culpa a empresa', f: { t: -6, k: -2 } }, { l: 'Pede desculpas e dá bônus', f: { c: -4, t: 3 } }] },
+  { id: 't_protesto_preco', q: 'organizada', c: g => g.m.t < 40, x: 'Faixa na arquibancada: "Diretoria, cadê o projeto?".',
+    o: [{ l: 'Ignora', f: { t: -4 } }, { l: 'Apresenta um plano', f: { k: 3, t: 3 } }] },
+  { id: 't_organizada_viagem', q: 'organizada', x: 'Queremos ônibus pagos pelo clube para a final fora de casa.',
+    o: [{ l: 'Nega', f: { t: -5, k: 4 } }, { l: 'Paga os ônibus', f: { c: -4, t: 6, k: -4 }, a: g => g.st.organizada++ }] },
+  { id: 't_criança', q: 'assessor', x: 'Um menino de 8 anos chorou no estádio e viralizou. Ele quer conhecer o elenco.',
+    o: [{ l: 'Manda uma camisa', f: { t: 2 } }, { l: 'Convida para entrar em campo', f: { t: 8 } }] },
+  { id: 't_musica_estadio', q: 'assessor', x: 'Tocar música alta no intervalo? A arquibancada prefere cantar.',
+    o: [{ l: 'Deixa a torcida cantar', f: { t: 3 } }, { l: 'Música e telão', f: { c: 2, t: -2 } }] },
+
+  // ---------- ELENCO ----------
+  { id: 'e_goleiro_veterano', q: 'goleiro', x: 'Tenho 39 anos. Quero renovar por mais dois e me aposentar aqui.',
+    o: [{ l: 'Renova por um', f: { c: -2, e: 1, t: 3 } }, { l: 'Agradece e encerra', f: { t: -5, e: -2, c: 3 } }] },
+  { id: 'e_craque_aumento', q: 'craque', x: 'Sou o melhor do time e o quinto salário do elenco. Quero ser valorizado.',
+    o: [{ l: 'Segura o salário', f: { e: -5, t: -3 } }, { l: 'Dá o aumento', f: { c: -7, e: 4 } }] },
+  { id: 'e_lesao_grave', q: 'medico', x: g => `${g.craque} rompeu o ligamento do joelho. São oito meses fora.`,
+    o: [{ l: 'Contrata substituto', f: { c: -8, e: 2 }, a: g => g.st.contratacoes++ }, { l: 'Aposta na base', f: { e: -6 } }] },
+  { id: 'e_briga_treino', q: 'capitao', x: 'Dois jogadores brigaram no treino. Um deles é o artilheiro.',
+    o: [{ l: 'Afasta os dois', f: { e: -5, k: 3 } }, { l: 'Conversa e segue', f: { e: -1, t: -2 } }] },
+  { id: 'e_religiao_vestiario', q: 'capitao', x: 'Parte do elenco quer um espaço de oração no CT. Outros preferem uma sala de videogame.',
+    o: [{ l: 'Faz os dois espaços', f: { c: -3, e: 3 } }, { l: 'Nenhum dos dois', f: { e: -2 } }] },
+  { id: 'e_dancinha', q: 'assessor', c: REDES, x: 'O elenco fez uma dancinha no vestiário depois da derrota. A torcida ficou furiosa.',
+    o: [{ l: 'Multa todo mundo', f: { e: -3, t: 4 } }, { l: 'Defende o grupo', f: { e: 3, t: -6 } }] },
+  { id: 'e_tatuagem', q: 'medico', x: 'O zagueiro fez uma tatuagem enorme na perna dois dias antes do jogo. Inflamou.',
+    o: [{ l: 'Multa', f: { k: 2, e: -1 } }, { l: 'Deixa passar', f: { e: -2 } }] },
+  { id: 'e_promessa_base', q: 'tecnico', c: g => !!g.com.tec, x: 'Tem um garoto de 16 anos treinando com os profissionais que é diferente. Lanço ele?',
+    o: [{ l: 'Ainda é cedo', f: { e: 1 } }, { l: 'Lança na decisão', f: g => ({ e: rint(-2, 6), t: 4 }) }] },
+  { id: 'e_jogador_livre', q: 'empresario', x: 'Um volante está sem clube e topa jogar por salário baixo e prêmio por meta.',
+    o: [{ l: 'Não precisa', f: {} }, { l: 'Contrata', f: { c: -2, e: 3 }, a: g => g.st.contratacoes++ }] },
+  { id: 'e_capitao_troca', q: 'tecnico', c: g => !!g.com.tec, x: 'Quero tirar a braçadeira do capitão. Ele não lidera mais.',
+    o: [{ l: 'Mantém o capitão', f: { e: 2, k: -1 } }, { l: 'Troca a braçadeira', f: { e: -3, t: -2 } }] },
+  { id: 'e_concentracao', q: 'capitao', x: 'O elenco quer acabar com a concentração em hotel na véspera dos jogos em casa.',
+    o: [{ l: 'Mantém', f: { c: -2, e: -1 } }, { l: 'Acaba', f: { c: 3, e: 2 }, r: 'Ou dá muito certo ou muito errado.' }] },
+  { id: 'e_artilheiro_seca', q: 'jornalista', x: 'O centroavante está há 15 jogos sem marcar. Ele pede para não falar com a imprensa.',
+    o: [{ l: 'Obriga a dar entrevista', f: { e: -3, t: 2 } }, { l: 'Protege o jogador', f: { e: 2, t: -2 } }] },
+  { id: 'e_emprestimo', q: 'empresario', x: 'Um grande clube quer emprestar um atacante jovem. Eles pagam metade do salário.',
+    o: [{ l: 'Recusa', f: {} }, { l: 'Aceita o empréstimo', f: { c: -2, e: 4 }, a: g => g.st.contratacoes++ }] },
+  { id: 'e_pais_jogador', q: 'joia', x: 'Meu pai quer ser meu empresário e vai pedir um carro no contrato.',
+    o: [{ l: 'Nada de carro', f: { e: -2, k: 2 } }, { l: 'Dá o carro', f: { c: -3, e: 3 } }] },
+  { id: 'e_coletivo_secreto', q: 'tecnico', c: g => !!g.com.tec, x: 'Descobri que o rival tem um informante no nosso CT. Mudamos o treino de lugar?',
+    o: [{ l: 'Treina de portões fechados', f: { c: -2, e: 2 } }, { l: 'Ignora', f: { e: -2 } }] },
+  { id: 'e_volta_ferias', q: 'preparador', x: 'Metade do elenco voltou das férias acima do peso.',
+    o: [{ l: 'Pré-temporada dobrada', f: { e: 3, t: -1 } }, { l: 'Multa por quilo', f: { c: 2, e: -2 } }] },
+  { id: 'e_ida_europa', q: 'craque', c: g => g.st.vendas === 0 && g.m.e > 45, x: 'Tenho 24 anos e um sonho: jogar na Europa. Se aparecer proposta, quero sair.',
+    o: [{ l: 'Promete liberar', f: { e: 2, t: -2 }, a: g => fila(g, 'e_europa_chega', 1) }, { l: 'Diz que é cedo', f: { e: -4 } }] },
+  { id: 'e_europa_chega', q: 'empresario', u: 1, x: g => `Chegou a proposta da Europa por ${g.craque}. Como prometido.`,
+    o: [{ l: 'Volta atrás', f: { e: -8, t: 4, k: -2 } }, { l: 'Cumpre a palavra', f: { c: 20, e: -6, t: -2 }, a: g => g.st.vendas++ }] },
+  { id: 'e_goleiro_reserva', q: 'goleiro', x: 'Sou reserva há quatro anos. Quero jogar ou ser emprestado.',
+    o: [{ l: 'Empresta', f: { c: 1 } }, { l: 'Promete chances', f: { e: 1, k: -1 } }] },
+  { id: 'e_jogador_politica', q: 'assessor', x: 'Um jogador declarou apoio a um candidato nas redes. Metade da torcida aplaudiu, a outra metade xingou.',
+    o: [{ l: 'Pede neutralidade a todos', f: { k: 3, e: -1 } }, { l: 'Diz que é direito dele', f: { t: -3, e: 2 } }] },
+  { id: 'e_nutricionista', q: 'preparador', x: 'Quero cortar o refrigerante e o churrasco depois dos jogos.',
+    o: [{ l: 'Deixa o churrasco', f: { e: -1, t: 1 } }, { l: 'Dieta rígida', f: { e: 3, c: -1 } }] },
+
+  // ---------- DINHEIRO E NEGÓCIOS ----------
+  { id: 'd_cripto', q: 'patrocinador', c: g => g.ano >= 2018, u: 1, x: 'Uma empresa de criptomoeda quer pagar o patrocínio em "token do torcedor".',
+    o: [{ l: 'Só em reais', f: { k: 3 } }, { l: 'Aceita o token', f: g => ({ c: rint(-8, 14), k: -3 }), r: 'O token oscilou 40% na primeira semana.' }] },
+  { id: 'd_loja', q: 'tesoureira', u: 1, x: 'Abrir uma loja oficial no shopping?',
+    o: [{ l: 'Só on-line', f: { c: 1 } }, { l: 'Abre a loja', f: { c: -4, t: 3 }, a: g => g.flags.loja = 1, r: 'Receita extra a partir do ano que vem.' }] },
+  { id: 'd_divida_fisco', q: 'tesoureira', c: g => g.divida > 300, x: 'A Receita cobra impostos atrasados. Dá para parcelar em 10 anos.',
+    o: [{ l: 'Deixa para a próxima gestão', f: { k: -6 }, a: g => g.divida += 60 }, { l: 'Parcela', f: { c: -5, k: 5 }, a: g => g.divida = Math.max(0, g.divida - 80) }] },
+  { id: 'd_terreno', q: 'conselheiro', c: g => g.m.c < 40, u: 1, x: 'Vender o terreno do antigo campo de treino resolveria metade das dívidas.',
+    o: [{ l: 'Patrimônio não se vende', f: { k: 3 } }, { l: 'Vende o terreno', f: { c: 18, k: -6, t: -3 }, a: g => g.divida = Math.max(0, g.divida - 150) }] },
+  { id: 'd_premio_atrasado', q: 'capitao', c: g => g.m.c < 30, x: 'O bicho da última vitória ainda não caiu. O vestiário está pesado.',
+    o: [{ l: 'Paga mês que vem', f: { e: -5 } }, { l: 'Paga com adiantamento da TV', f: { c: 4, k: -4 }, a: g => g.divida += 30 }] },
+  { id: 'd_licenciamento', q: 'patrocinador', x: 'Uma marca quer lançar uma linha de produtos com o escudo: de chinelo a cerveja sem álcool.',
+    o: [{ l: 'Só produtos oficiais', f: { c: 1, t: 1 } }, { l: 'Licencia tudo', f: { c: 7, t: -2 } }] },
+  { id: 'd_ingresso_app', q: 'tesoureira', c: REDES, x: 'Vender ingresso só pelo aplicativo acaba com cambistas, mas os mais velhos reclamam.',
+    o: [{ l: 'Mantém bilheteria', f: { c: -1, t: 2 } }, { l: 'Só aplicativo', f: { c: 4, t: -4 } }] },
+  { id: 'd_banco', q: 'tesoureira', c: g => g.m.c < 25, w: 2, x: 'O banco oferece crédito para pagar as contas do mês. Juros de agiota.',
+    o: [{ l: 'Recusa', f: { e: -4, k: 2 } }, { l: 'Pega o empréstimo', f: { c: 14, k: -4 }, a: g => g.divida += 90 }] },
+  { id: 'd_patrocinio_cancelado', q: 'patrocinador', c: g => g.ultimo && g.ultimo.ruim, x: 'Com o mau momento, nosso patrocinador quer renegociar o contrato para baixo.',
+    o: [{ l: 'Aceita reduzir', f: { c: -4, k: 2 } }, { l: 'Procura outro', f: g => ({ c: rint(-8, 6) }) }] },
+  { id: 'd_doacao', q: 'conselheiro', x: 'Um torcedor milionário quer doar dinheiro em troca de uma estátua dele na entrada.',
+    o: [{ l: 'Recusa a estátua', f: { k: 2 } }, { l: 'Aceita', f: { c: 10, t: -5 }, r: 'A estátua ficou parecida com ninguém.' }] },
+  { id: 'd_show', q: 'patrocinador', c: g => g.flags.estadio || ELITE(g), x: 'Uma turnê internacional quer fazer show no estádio. O gramado sofre.',
+    o: [{ l: 'Gramado primeiro', f: { e: 1 } }, { l: 'Aluga para o show', f: { c: 9, e: -3 } }] },
+  { id: 'd_corte_salario', q: 'tesoureira', c: g => g.m.c < 20, w: 3, x: 'Precisamos cortar 20% dos salários de todos, inclusive da diretoria.',
+    o: [{ l: 'Corta', f: { c: 10, e: -6, k: 3 } }, { l: 'Arrisca mais um mês', f: { k: -4 } }] },
+  { id: 'd_premiacao_estadual', q: 'vice', x: 'A federação aumentou a premiação do estadual. Vale entrar com os titulares?',
+    o: [{ l: 'Titulares no estadual', f: { e: -3, c: 3 } }, { l: 'Time alternativo', f: { e: 2, t: -2 } }] },
+
+  // ---------- POLÍTICA DO CLUBE ----------
+  { id: 'p_assembleia', q: 'conselheiro', x: 'Uma assembleia de sócios quer votar a mudança do escudo para um "mais moderno".',
+    o: [{ l: 'Escudo é tradição', f: { t: 4, k: 2 } }, { l: 'Apoia o novo escudo', f: { t: -8, c: 3 } }] },
+  { id: 'p_cargo_parente', q: 'vice', x: 'Um conselheiro quer emprego no clube para o sobrinho, "formado em marketing".',
+    o: [{ l: 'Nega', f: { k: -4 } }, { l: 'Contrata o sobrinho', f: { k: 5, c: -1 }, r: 'O primeiro post dele já virou polêmica.' }] },
+  { id: 'p_transparencia', q: 'jornalista', x: 'Publicar todos os contratos e salários do clube no site?',
+    o: [{ l: 'Não', f: { k: 2 } }, { l: 'Publica', f: { t: 5, k: -5 } }] },
+  { id: 'p_oposicao', q: 'conselheiro', c: g => g.anoMandato >= 2, x: 'A oposição convocou reunião extraordinária para discutir seu "estilo de gestão".',
+    o: [{ l: 'Não comparece', f: { k: -6 } }, { l: 'Vai e se explica', f: { k: 4, t: -1 } }] },
+  { id: 'p_voto_online', q: 'assessor', c: REDES, u: 1, x: 'Permitir voto on-line na eleição do clube? Mais sócios votariam.',
+    o: [{ l: 'Mantém presencial', f: { k: 4, t: -3 } }, { l: 'Libera o voto on-line', f: { t: 5, k: -4 }, a: g => g.flags.votoOnline = 1 }] },
+  { id: 'p_ex_presidente', q: 'conselheiro', x: 'O ex-presidente quer uma sala no clube "para ajudar". Ele ainda tem muitos aliados.',
+    o: [{ l: 'Dá a sala', f: { k: 6, t: -2 } }, { l: 'Recusa', f: { k: -5, t: 2 } }] },
+  { id: 'p_mandato_curto', q: 'conselheiro', c: g => g.mandato >= 3, x: 'Um grupo propõe limitar a dois mandatos daqui para frente.',
+    o: [{ l: 'Apoia, sem valer para você', f: { k: 3, t: 2 } }, { l: 'Arquiva a proposta', f: { k: -3, t: -4 } }] },
+  { id: 'p_diretor_remunerado', q: 'conselheiro', x: 'Profissionalizar a gestão: contratar um CEO para o futebol?',
+    o: [{ l: 'O presidente decide', f: { k: 2, c: 1 } }, { l: 'Contrata um CEO', f: { c: -5, k: 4, e: 2 } }] },
+
+  // ---------- IMPRENSA E REDES ----------
+  { id: 'i_entrevista_quente', q: 'jornalista', x: 'O senhor garante o técnico até o fim do ano?',
+    o: [{ l: '"Garantido"', f: { k: 2, t: -2 }, a: g => g.flags.estavel = 1, r: 'Frase anotada pela imprensa inteira.' }, { l: '"Futebol é resultado"', f: { t: 2 } }] },
+  { id: 'i_podcast', q: 'assessor', c: REDES, x: 'O maior podcast de futebol do país quer o senhor ao vivo por três horas.',
+    o: [{ l: 'Recusa', f: {} }, { l: 'Vai ao podcast', f: g => ({ t: rint(-8, 10), k: -2 }), r: 'Você falou demais. Ou de menos.' }] },
+  { id: 'i_fake_news', q: 'assessor', c: REDES, x: 'Circula um áudio falso dizendo que o clube vai vender o estádio.',
+    o: [{ l: 'Desmente em vídeo', f: { t: 3, k: 1 } }, { l: 'Processa os perfis', f: { c: -3, k: 3 } }] },
+  { id: 'i_documentario', q: 'jornalista', x: 'Uma reportagem quer contar a história do clube no centenário. Pedem acesso ao acervo.',
+    o: [{ l: 'Abre o acervo', f: { t: 5, c: -1 } }, { l: 'Só com aprovação do texto', f: { k: 2, t: -2 } }] },
+  { id: 'i_coletiva_derrota', q: 'assessor', c: g => g.ultimo && g.ultimo.ruim, x: 'Depois da goleada sofrida, o senhor dá entrevista coletiva?',
+    o: [{ l: 'Fica em silêncio', f: { t: -4, k: 2 } }, { l: 'Assume a culpa', f: { t: 4, k: -3 } }] },
+  { id: 'i_meme_presidente', q: 'influencer', c: REDES, x: 'Sua cara de desespero na tribuna virou meme. Quer gravar um vídeo comigo rindo disso?',
+    o: [{ l: 'Não', f: { k: 1 } }, { l: 'Grava', f: { t: 6, k: -2 } }] },
+  { id: 'i_radio_antigo', q: 'narrador', c: ANTIGO, x: 'O narrador da rádio está chamando o time de "pangaré" ao vivo.',
+    o: [{ l: 'Liga para a rádio', f: { k: -2, t: 2 } }, { l: 'Convida para um café', f: { t: 3 } }] },
+  { id: 'i_bastidores', q: 'jornalista', x: 'Vazou o áudio de uma reunião da diretoria. Tem palavrão e xingamento ao técnico.',
+    o: [{ l: 'Pede desculpas ao técnico', f: { k: -2, e: 2 } }, { l: 'Caça o responsável', f: { k: 3, t: -3 } }] },
+
+  // ---------- ABSURDOS E SORTE ----------
+  { id: 'z_sapo', q: 'roupeiro', x: 'Acharam um sapo enterrado no meio-campo. Dizem que é trabalho do rival.',
+    o: [{ l: 'Tira o sapo', f: { t: 2 } }, { l: 'Chama um benzedor', f: { c: -1, t: 4 }, r: 'Na dúvida, benzeram também as traves.' }] },
+  { id: 'z_drone', q: 'assessor', x: 'Um drone com uma faixa contra a diretoria sobrevoou o estádio no meio do jogo.',
+    o: [{ l: 'Ri da situação', f: { t: 3, k: -2 } }, { l: 'Proíbe drones', f: { k: 2, t: -1 } }] },
+  { id: 'z_cobra', q: 'roupeiro', x: 'Uma cobra apareceu no vestiário visitante. O adversário se recusa a entrar.',
+    o: [{ l: 'Chama os bombeiros', f: { k: 2 } }, { l: 'Diz que é o mascote', f: { t: 4, k: -3 } }] },
+  { id: 'z_apagao', q: 'prefeito', x: 'Apagão no estádio aos 40 do segundo tempo, com o jogo empatado.',
+    o: [{ l: 'Espera a luz voltar', f: { e: -1 } }, { l: 'Pede adiamento', f: { k: -2, t: 2 } }] },
+  { id: 'z_chuva', q: 'tecnico', c: g => !!g.com.tec, x: 'Choveu tanto que o campo virou piscina. O jogo é em duas horas.',
+    o: [{ l: 'Joga assim mesmo', f: g => ({ e: rint(-4, 4) }) }, { l: 'Pede adiamento', f: { c: -2 } }] },
+  { id: 'z_trave', q: 'roupeiro', x: 'Descobriram que uma das traves tem 3 centímetros a menos. Há quantos anos, ninguém sabe.',
+    o: [{ l: 'Corrige discretamente', f: { c: -1 } }, { l: 'Assume e ri', f: { t: 3, k: -1 } }] },
+  { id: 'z_promessa_careca', q: 'assessor', x: 'A torcida quer que o senhor raspe a cabeça se o time vencer o clássico.',
+    o: [{ l: 'Não promete nada', f: { t: -2 } }, { l: 'Promete raspar', f: { t: 6 }, r: 'Se ganhar, a máquina já está comprada.' }] },
+  { id: 'z_camisa_retro', q: 'patrocinador', x: 'Relançar a camisa do título de 1977. As vendas podem bater recorde.',
+    o: [{ l: 'Só a atual', f: {} }, { l: 'Lança a retrô', f: { c: 6, t: 5 } }] },
+  { id: 'z_jogador_atrasado', q: 'capitao', x: 'O lateral perdeu o voo porque dormiu no aeroporto. Chega só no segundo tempo.',
+    o: [{ l: 'Multa', f: { k: 2, e: -1 } }, { l: 'Deixa passar', f: { e: 1, t: -1 } }] },
+  { id: 'z_benzedeira', q: 'vidente', x: 'Dez anos sem título. Uma benzedeira jura que o problema é a cor da porta do vestiário.',
+    o: [{ l: 'Ignora', f: {} }, { l: 'Pinta a porta', f: { c: -1, t: 3 }, a: g => g.flags.gravata = (g.flags.gravata || 0) + 1 }] },
+  { id: 'z_tecnico_horoscopo', q: 'tecnico', c: g => !!g.com.tec, x: 'Escalo o time de acordo com o mapa astral dos jogadores. Funciona.',
+    o: [{ l: 'Exige critério técnico', f: { e: 1, k: 2 } }, { l: 'Se funciona...', f: g => ({ e: rint(-4, 5), t: 2 }) }] },
+  { id: 'z_pombo', q: 'torcedor', x: 'Um pombo pousou na cabeça do goleiro e ficou o primeiro tempo inteiro.',
+    o: [{ l: 'Chama a equipe de resgate', f: {} }, { l: 'Pombo vira símbolo', f: { t: 5 } }] },
+
+  // ---------- ÉPOCAS (sem ser fato) ----------
+  { id: 'ep_fax', q: 'vice', c: g => g.ano < 1998, x: 'O contrato do reforço chegou por fax, mas a última página saiu ilegível.',
+    o: [{ l: 'Pede para mandar de novo', f: { e: -1 } }, { l: 'Assina assim mesmo', f: g => ({ e: rint(-3, 5) }) }] },
+  { id: 'ep_videocassete', q: 'analista', c: g => g.ano < 2002, x: 'Precisamos de um videocassete novo para gravar os jogos do adversário.',
+    o: [{ l: 'Pede emprestado', f: { e: -1 } }, { l: 'Compra dois', f: { c: -1, e: 2 } }] },
+  { id: 'ep_telefone', q: 'empresario', c: g => g.ano < 2000, x: 'O jogador que você quer só atende no orelhão da cidade dele, às terças.',
+    o: [{ l: 'Desiste', f: {} }, { l: 'Manda um dirigente até lá', f: { c: -2, e: 3 }, a: g => g.st.contratacoes++ }] },
+  { id: 'ep_site', q: 'assessor', c: g => g.ano >= 1998 && g.ano < 2008, u: 1, x: 'Criar o primeiro site oficial do clube? Tem gente que nem sabe o que é internet.',
+    o: [{ l: 'Coisa passageira', f: { t: -1 } }, { l: 'Cria o site', f: { c: -2, t: 3 } }] },
+  { id: 'ep_rede_social', q: 'assessor', c: g => g.ano >= 2010 && g.ano < 2016, u: 1, x: 'Criar perfis do clube nas redes sociais e contratar alguém só para isso?',
+    o: [{ l: 'Não precisa', f: { t: -3 } }, { l: 'Contrata', f: { c: -2, t: 5 } }] },
+  { id: 'ep_ia', q: 'analista', c: g => g.ano >= 2024, x: 'Uma ferramenta de inteligência artificial promete achar talentos escondidos em ligas pequenas.',
+    o: [{ l: 'Prefere olheiro de campo', f: { k: 1 } }, { l: 'Assina a ferramenta', f: { c: -4, e: 4 } }] },
+
+  // ---------- COMISSÃO (mais) ----------
+  { id: 'cm_preparador_metodo', q: 'preparador', c: g => !!g.com.fis, x: 'Quero instalar GPS nos coletes para medir a carga de cada jogador.',
+    o: [{ l: 'Muito caro', f: { e: -1 } }, { l: 'Compra os GPS', f: { c: -4, e: 4 } }] },
+  { id: 'cm_tecnico_familia', q: 'tecnico', c: g => !!g.com.tec, x: 'Minha família ficou na outra cidade. Preciso de dois dias de folga por mês.',
+    o: [{ l: 'Não pode', f: { e: -2, k: 2 } }, { l: 'Libera', f: { e: 1 } }] },
+  { id: 'cm_analista_dados', q: 'analista', c: g => !!g.com.ana, x: 'Os números mostram que perdemos muitos pontos nos últimos 15 minutos.',
+    o: [{ l: 'Ignora planilha', f: { e: -1 } }, { l: 'Muda a preparação', f: { e: 3, c: -1 } }] },
+  { id: 'cm_base_garoto', q: 'capitao', c: g => est(g, 'bas') >= 3, x: 'A base revelou um meia canhoto que já treina melhor que muito titular.',
+    o: [{ l: 'Deixa amadurecer', f: { e: 1 } }, { l: 'Sobe para o profissional', f: { e: 4, t: 3 } }] },
+  { id: 'cm_medico_volta', q: 'medico', c: g => !!g.com.med, x: g => `${g.craque} quer jogar a final no sacrifício, com dor.`,
+    o: [{ l: 'Escala com infiltração', f: g => ({ e: rint(-6, 4), t: 3 }) }, { l: 'Veta', f: { e: 1, t: -3 } }] },
+
+  // ---------- BASE, FEMININO E SOCIAL (mais) ----------
+  { id: 's_escolinha', q: 'prefeito', u: 1, x: 'Abrir escolinhas do clube em cinco bairros da periferia?',
+    o: [{ l: 'Agora não', f: {} }, { l: 'Abre as escolinhas', f: { c: -4, t: 5, e: 1 }, a: g => g.flags.base = 1 }] },
+  { id: 's_racismo', q: 'capitao', x: 'Um jogador nosso foi alvo de ofensas racistas da arquibancada.',
+    o: [{ l: 'Nota de repúdio só', f: { t: -3, e: -2 } }, { l: 'Identifica e bane os torcedores', f: { t: 3, e: 4, k: 2 } }] },
+  { id: 's_feminino_estrela', q: 'tesoureira', c: g => g.flags.feminino, x: 'A artilheira do time feminino recebeu proposta dos Estados Unidos.',
+    o: [{ l: 'Libera', f: { c: 3, t: -2 } }, { l: 'Cobre a proposta', f: { c: -4, t: 5 } }] },
+  { id: 's_paralimpico', q: 'prefeito', u: 1, x: 'Criar um time de futebol para pessoas com deficiência visual, com bola de guizo?',
+    o: [{ l: 'Sem verba', f: {} }, { l: 'Cria o time', f: { c: -2, t: 4, k: 2 } }] },
+  { id: 's_agasalho', q: 'assessor', x: 'Campanha do agasalho: cada torcedor que doar ganha desconto no ingresso.',
+    o: [{ l: 'Não', f: {} }, { l: 'Faz a campanha', f: { c: -1, t: 4 } }] },
+
+  // ---------- MAIS FATOS HISTÓRICOS ----------
+  { id: 'f_plebiscito', q: 'fato', c: g => g.ano === 1993, u: 1, x: 'Abril de 1993: em plebiscito, o país decide manter a república e o presidencialismo. Um conselheiro brinca que o clube devia ter um "rei".',
+    o: [{ l: 'Ri e segue', f: { k: 2 } }, { l: 'Cria o "Rei do Clube" para a mascote', f: { t: 4, c: -1 } }] },
+  { id: 'f_copa98', q: 'fato', c: g => g.ano === 1998, u: 1, x: 'Julho de 1998: o Brasil perde a final da Copa para a França, na França. O país está de luto.',
+    o: [{ l: 'Segue o calendário', f: { k: 2 } }, { l: 'Ingresso a preço popular', f: { c: -3, t: 6 } }] },
+  { id: 'f_penta', q: 'fato', c: g => g.ano === 2002, u: 1, x: 'Junho de 2002: o Brasil é pentacampeão mundial, na Copa do Japão e da Coreia do Sul.',
+    o: [{ l: 'Segue o trabalho', f: { k: 2 } }, { l: 'Festa e jogo festivo', f: { c: -2, t: 8 } }] },
+  { id: 'f_apito', q: 'fato', c: g => g.ano === 2005, u: 1, x: '2005: um escândalo de arbitragem manipulada leva a Justiça Desportiva a anular e remarcar 11 jogos do Brasileirão.',
+    o: [{ l: 'Pede investigação ampla', f: { k: 3, t: 2 } }, { l: 'Fica calado', f: { k: -2 } }] },
+  { id: 'f_sede2014', q: 'fato', c: g => g.ano === 2007, u: 1, x: 'Outubro de 2007: o Brasil é escolhido sede da Copa de 2014. A prefeitura fala em estádio novo na cidade.',
+    o: [{ l: 'Fica fora da disputa', f: { k: 3 } }, { l: 'Faz lobby pelo estádio', f: { c: -3, t: 4, k: -2 } }] },
+  { id: 'f_ouro2016', q: 'fato', c: g => g.ano === 2016, u: 1, x: 'Agosto de 2016: no Maracanã, o Brasil conquista o primeiro ouro olímpico do futebol masculino.',
+    o: [{ l: 'Segue o trabalho', f: { k: 2 } }, { l: 'Busca um medalhista olímpico', f: { c: -8, e: 5, t: 6 }, a: g => g.st.contratacoes++ }] },
+  { id: 'f_copa2022', q: 'fato', c: g => g.ano === 2022, u: 1, x: '2022: a Copa do Catar é em novembro e dezembro. O Brasileirão termina mais cedo, com calendário apertado.',
+    o: [{ l: 'Poupa titulares', f: { e: 3, t: -3 } }, { l: 'Joga tudo com força máxima', f: { e: -4, t: 3 } }] },
+  { id: 'f_copa2026', q: 'fato', c: g => g.ano === 2026, u: 1, x: 'Junho de 2026: começa a primeira Copa do Mundo com 48 seleções, nos Estados Unidos, no México e no Canadá.',
+    o: [{ l: 'Pausa e pré-temporada', f: { e: 3 } }, { l: 'Excursão para jogar amistosos', f: { c: 6, e: -2 } }] },
+
+  // ---------- CONVITES (só aparecem quando torcida ou conselho chegam a 100) ----------
+  { id: 'convite_politico', q: 'assessor', especial: 1, x: 'Com 100% de aprovação, um partido te convida para disputar uma vaga de deputado. Aceita?',
+    o: [{ l: 'Fica no clube', f: { t: -18, k: 4 }, r: 'Você recusou. A torcida fez música: "esse é dos nossos".' },
+        { l: 'Aceita a candidatura', f: {}, a: g => { g.fimForcado = 't100'; } }] },
+  { id: 'convite_vitalicio', q: 'conselheiro', especial: 1, x: 'O Conselho, encantado, quer aprovar mandato vitalício para o senhor. Aceita?',
+    o: [{ l: 'Recusa: democracia', f: { k: -18, t: 6 }, r: 'Discurso histórico. O conselho ficou sem graça.' },
+        { l: 'Aceita a coroa', f: {}, a: g => { g.fimForcado = 'k100'; } }] },
+);
+
+/* ===================== COMISSÃO TÉCNICA =====================
+   Seis cargos, cada um com estrelas (de 0,5 a 5, de meia em meia), idade, salário e contrato.
+   No fim de cada temporada abre a janela: renovar, liberar, demitir ou contratar no mercado.
+   Quem é muito bom pode não querer vir; quem está no fim do contrato pode não querer ficar. */
+const CARGOS = [
+  ['tec', 'Técnico', 'Monta o time. É o que mais pesa nos resultados.'],
+  ['aux', 'Auxiliar técnico', 'Ajuda o técnico e assume como interino se ele sair.'],
+  ['fis', 'Preparador físico', 'Segura o desgaste do elenco ao longo do ano.'],
+  ['med', 'Médico', 'Menos lesões, time mais inteiro na reta final.'],
+  ['ana', 'Analista de desempenho', 'Estuda os rivais. Pesa muito nos mata-matas.'],
+  ['bas', 'Coordenador da base', 'Revela garotos: o elenco se renova e aparece joia para vender.'],
+];
+const NOMECARGO = Object.fromEntries(CARGOS.map(([k, n]) => [k, n]));
+const NOMES = ['Ana', 'Renata', 'Patrícia', 'Carla', 'Juliana', 'Luciana', 'Marcos', 'Diego', 'Fábio', 'Sérgio', 'Thiago', 'Bruno', 'Márcia', 'Rafael', 'Elaine', 'Gustavo'];
+const TRACOS = {
+  Motivador: { d: 'torcida +2 por ano', t: 2 }, Retranqueiro: { d: 'time +1, torcida −2', f: 1, t: -2 },
+  'Linha-dura': { d: 'time +2, elenco −1', f: 2, e: -1 }, 'Paizão': { d: 'elenco +2 por ano', e: 2 },
+  Estrela: { d: 'torcida +3, salário alto', t: 3 }, Professor: { d: 'revela garotos: elenco +1', e: 1 },
+};
+const meio = x => Math.round(x * 2) / 2;
+const fmtE = n => String(n).replace('.', ',');
+const estrelas = (n, cls = '') => `<span class="est ${cls}" role="img" aria-label="${fmtE(n)} de 5 estrelas"><span aria-hidden="true">★★★★★</span><i aria-hidden="true" style="width:${n / 5 * 100}%">★★★★★</i></span>`;
+function salarioBase(cargo, est) { return cargo === 'tec' ? 0.5 * est ** 1.5 : 0.2 * est ** 1.4; }
+const reais = u => { const mil = Math.round(u * 150); return mil >= 1000 ? `R$ ${(mil / 1000).toFixed(1).replace('.', ',')} mi/mês` : `R$ ${mil} mil/mês`; };
+let SEQ = 0;
+function novoMembro(cargo, est, o = {}) {
+  const gringo = cargo === 'tec' && (o.gringo ?? R() < 0.25);
+  const nome = cargo === 'tec' ? (gringo ? pick(GRINGOS) : `${pick(TEC1)} ${pick(TEC2)}`)
+    : `${cargo === 'med' ? (R() < 0.5 ? 'Dra. ' : 'Dr. ') : ''}${pick(NOMES)} ${pick(TEC2)}`;
+  const traco = cargo === 'tec' ? pick(Object.keys(TRACOS)) : null;
+  const m = { id: ++SEQ, cargo, nome, est: clamp(meio(est), 0.5, 5), idade: o.idade ?? rint(cargo === 'tec' ? 36 : 29, cargo === 'tec' ? 68 : 62),
+    contrato: o.contrato ?? rint(1, 3), pele: rint(0, 4), traco, gringo };
+  m.sal = +(salarioBase(cargo, m.est) * (gringo ? 1.35 : 1) * (traco === 'Estrela' ? 1.3 : 1) * (o.salMult || 1)).toFixed(2);
+  return m;
+}
+function comissaoInicial(cen) {
+  const media = { gigante: 3, medio: 2.5, pequeno: 1.5 }[cen];
+  const c = {};
+  for (const [k] of CARGOS) c[k] = novoMembro(k, media + (rint(-2, 2) * 0.5), { contrato: k === 'tec' ? rint(1, 2) : rint(1, 3), gringo: false });
+  return c;
+}
+/* estrelas efetivas de um cargo (vago = funcionário da casa, 1 estrela; técnico vago = auxiliar interino) */
+function est(g, k) {
+  if (g.com[k]) return g.com[k].est;
+  if (k === 'tec') return g.com.aux ? Math.max(0.5, g.com.aux.est - 1) : 0.5;
+  return 1;
+}
+function sincTec(g) {
+  const t = g.com.tec, a = g.com.aux;
+  g.tecnico = t ? { nome: t.nome, pele: t.pele, est: t.est }
+    : { nome: a ? `${a.nome} (interino)` : 'Técnico interino', pele: a ? a.pele : 1, est: est(g, 'tec'), interino: true };
+}
+function folhaComissao(g) { return CARGOS.reduce((s, [k]) => s + (g.com[k] ? g.com[k].sal : 0.15), 0); }
+function prestigio(g) {
+  const recentes = g.hist.slice(0, 3).reduce((s, r) => s + r.titulos.filter(t => t !== 'Campeão Estadual').length, 0);
+  const p = { A: 3, B: 2, C: 1.2, D: 0.6 }[g.serie] + Math.min(1, recentes * 0.4) + (g.m.t - 50) / 100 + (g.flags.lib ? 0.4 : 0)
+    + (g.flags.saf ? 0.3 : 0) + (g.flags.ct ? 0.2 : 0) - (g.m.c < 20 ? 0.5 : 0);
+  return clamp(meio(p), 0.5, 5);
+}
+/* chance de aceitar uma proposta (contratar) ou de renovar */
+function chanceAceita(g, m, mais) { return clamp(0.5 + (prestigio(g) - m.est) * 0.32 + (mais ? 0.22 : 0) - (g.m.c < 15 ? 0.15 : 0), 0.04, 0.96); }
+function chanceRenova(g, m, mais) { return clamp(0.7 + (prestigio(g) - m.est) * 0.28 + (mais ? 0.25 : 0) + (g.ultimo && !g.ultimo.ruim ? 0.08 : -0.08), 0.06, 0.97); }
+const interesse = p => p >= 0.75 ? ['Alto', 'i-alto'] : p >= 0.45 ? ['Médio', 'i-medio'] : p >= 0.2 ? ['Baixo', 'i-baixo'] : ['Quase nenhum', 'i-nada'];
+const RECUSAS = [
+  'Prefiro esperar uma proposta da Europa.', 'O projeto não me convenceu.', 'Minha família não quer mudar de cidade.',
+  'O clube não tem estrutura para o meu trabalho.', 'Ouvi dizer que aí o salário atrasa.', 'Já dei a palavra para outro clube.',
+];
+function registraContratacao(g, m) { if (m.gringo) g.st.gringos++; if (!g.st.melhorContratacao || m.est > g.st.melhorContratacao.est) g.st.melhorContratacao = { nome: m.nome, est: m.est, cargo: NOMECARGO[m.cargo], ano: g.ano }; }
+
+/* fim de ano: idade, evolução e contratos. Devolve avisos para a janela. */
+function fimDeAno(g) {
+  const avisos = [];
+  for (const [k, n] of CARGOS) {
+    const m = g.com[k]; if (!m) continue;
+    m.idade++; m.contrato--;
+    if (m.idade < 45 && R() < 0.3 && m.est < 5) { m.est = meio(m.est + 0.5); avisos.push(`${n} ${m.nome} evoluiu para ${fmtE(m.est)} estrelas.`); }
+    else if (m.idade > 63 && R() < 0.3 && m.est > 0.5) { m.est = meio(m.est - 0.5); avisos.push(`${n} ${m.nome} caiu para ${fmtE(m.est)} estrelas (idade).`); }
+    if (m.contrato <= 0) { m.vence = 1; avisos.push(`O contrato de ${m.nome} (${n.toLowerCase()}) acabou. Renove ou ele sai.`); }
+  }
+  return avisos;
+}
+
+/* ---------- a janela ---------- */
+const J = { avisos: [], msgs: {}, mercado: {}, abertos: {}, depois: null };
+function janela(avisos, depois) {
+  J.avisos = avisos; J.msgs = {}; J.mercado = {}; J.abertos = {}; J.depois = depois; J.custo = 0;
+  desenhaJanela();
+}
+function desenhaJanela() {
+  const g = G, pr = prestigio(g);
+  const linha = ([k, n, d]) => {
+    const m = g.com[k], msg = J.msgs[k] ? `<p class="resp">${J.msgs[k]}</p>` : '';
+    if (!m) {
+      const merc = J.abertos[k] ? mercadoHtml(k) : '';
+      return `<div class="membro vago"><div class="cargo">${n}<small>${d}</small></div>
+        <div class="quem"><b>VAGO</b> <span class="sub">${k === 'tec' ? `O auxiliar assume como interino (${fmtE(est(g, 'tec'))}★)` : 'Um funcionário da casa quebra o galho (1★)'}</span></div>
+        <div class="acs"><button class="bt am mini" data-acao="mercado" data-k="${k}" type="button">${J.abertos[k] ? 'Fechar mercado' : 'Contratar'}</button></div>${msg}${merc}</div>`;
+    }
+    const contrato = m.vence ? '<span class="vence">CONTRATO ACABOU</span>' : `Contrato: ${m.contrato} ${m.contrato === 1 ? 'ano' : 'anos'}`;
+    const multa = Math.max(1, Math.round(m.sal * m.contrato * 0.5));
+    const acoes = m.vence
+      ? `<button class="bt am mini" data-acao="renovar" data-k="${k}" type="button">Renovar</button>${m.recusou ? `<button class="bt cl mini" data-acao="insistir" data-k="${k}" type="button">Insistir com +30%</button>` : ''}<button class="bt vz mini" data-acao="liberar" data-k="${k}" type="button">Deixar sair</button>`
+      : `<button class="bt vz mini" data-acao="demitir" data-k="${k}" type="button">Demitir (−${multa} de caixa)</button>`;
+    return `<div class="membro${m.vence ? ' alerta' : ''}"><div class="cargo">${n}<small>${d}</small></div>
+      <div class="quem"><b>${esc(m.nome)}</b> ${estrelas(m.est)}<span class="sub">${m.idade} anos${m.traco ? ` · ${m.traco}: ${TRACOS[m.traco].d}` : ''}${m.gringo ? ' · estrangeiro' : ''}</span>
+      <span class="sub">${contrato} · ${reais(m.sal)}</span></div><div class="acs">${acoes}</div>${msg}</div>`;
+  };
+  const vencidos = CARGOS.filter(([k]) => g.com[k] && g.com[k].vence).length;
+  mostraTelao(`<span class="k">Janela da comissão técnica · antes da temporada ${g.ano}</span><h2>Monte sua comissão</h2>
+    <div class="topo-janela"><span>Prestígio do clube ${estrelas(pr, 'cl')}</span><span>Caixa ${G.m.c}/100</span><span>Folha da comissão ${reais(folhaComissao(g))}</span></div>
+    <p class="explica">Quanto maior o prestígio, mais fácil trazer e segurar gente boa. Profissional com mais estrelas que o prestígio do clube costuma recusar.</p>
+    ${J.avisos.length ? `<ul class="avisos">${J.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
+    ${vencidos ? `<p><button class="bt cl mini" data-acao="renovartodos" type="button">Renovar todos os contratos que acabaram (salário normal)</button></p>` : ''}
+    <div class="comissao">${CARGOS.map(linha).join('')}</div>
+    ${vencidos ? `<p class="explica"><b>Atenção:</b> ${vencidos === 1 ? 'quem está' : 'os que estão'} com contrato acabado ${vencidos === 1 ? 'sai' : 'saem'} se você começar a temporada sem renovar.</p>` : ''}
+    <button class="bt am" id="segue" type="button">Começar a temporada ${g.ano}</button>`, () => {
+    for (const [k] of CARGOS) if (g.com[k] && g.com[k].vence) g.com[k] = null;
+    if (J.custo) aplica({ c: -J.custo });
+    sincTec(g);
+    if (!checaFim(J.depois) && J.depois) J.depois();
+  }, true);
+  document.querySelectorAll('#painel [data-acao]').forEach(b => b.onclick = () => acaoJanela(b.dataset.acao, b.dataset.k, b.dataset.i));
+}
+function mercadoHtml(k) {
+  const g = G;
+  if (!J.mercado[k]) {
+    const top = meio(clamp(prestigio(g) + 1 + R() * 1.5, 2, 5)), base = prestigio(g);
+    const nomes = new Set(Object.values(g.com).filter(Boolean).map(m => m.nome));
+    J.mercado[k] = [top, meio(base + 0.5), meio(base), meio(clamp(base - 1, 0.5, 5))].map(e => {
+      let m, t = 0; do { m = novoMembro(k, clamp(e, 0.5, 5), { contrato: rint(1, 3) }); t++; } while (nomes.has(m.nome) && t < 20);
+      nomes.add(m.nome); return m;
+    });
+  }
+  return `<div class="mercado">${J.mercado[k].map((m, i) => {
+    const p = chanceAceita(g, m, false), [it, cls] = interesse(p);
+    return `<div class="cand${m.recusou ? ' recusou' : ''}${m.contratado ? ' ok' : ''}"><div><b>${esc(m.nome)}</b> ${estrelas(m.est)}
+      <span class="sub">${m.idade} anos${m.traco ? ` · ${m.traco}` : ''}${m.gringo ? ' · estrangeiro' : ''} · ${reais(m.sal)} · ${m.contrato} ${m.contrato === 1 ? 'ano' : 'anos'}</span>
+      <span class="sub">Interesse em vir: <b class="${cls}">${it}</b></span></div>
+      ${m.recusou ? `<p class="resp">"${esc(m.recusou)}"</p>` : `<div class="acs"><button class="bt am mini" data-acao="propor" data-k="${k}" data-i="${i}" type="button">Fazer proposta</button><button class="bt cl mini" data-acao="propormais" data-k="${k}" data-i="${i}" type="button">Proposta +30%</button></div>`}</div>`;
+  }).join('')}</div>`;
+}
+function renova(k, mais) {
+  const g = G, m = g.com[k];
+  if (R() < chanceRenova(g, m, mais)) {
+    m.vence = 0; m.recusou = 0; m.contrato = rint(1, 3);
+    m.sal = +(salarioBase(k, m.est) * (mais ? 1.3 : 1.1) * (m.gringo ? 1.35 : 1)).toFixed(2);
+    J.msgs[k] = `Renovou por ${m.contrato} ${m.contrato === 1 ? 'ano' : 'anos'}.`;
+  } else if (!mais) { m.recusou = 1; J.msgs[k] = `"${pick(['Quero ouvir outras propostas.', 'Esperava ser mais valorizado.', 'Vou pensar com a minha família.'])}" Ofereça mais ou deixe sair.`; }
+  else { g.com[k] = null; J.msgs[k] = `Não quis renovar: ${esc(m.nome)} foi embora. ${pick(['Assinou com um rival.', 'Foi trabalhar no exterior.', 'Disse que precisava de "novos desafios".'])}`; if (k === 'tec') sincTec(g); }
+}
+function acaoJanela(acao, k, i) {
+  const g = G, m = g.com[k];
+  if (acao === 'mercado') { J.abertos[k] = !J.abertos[k]; return desenhaJanela(); }
+  if (acao === 'renovartodos') { for (const [kk] of CARGOS) if (g.com[kk] && g.com[kk].vence && !g.com[kk].recusou) renova(kk, false); return desenhaJanela(); }
+  if (acao === 'renovar' || acao === 'insistir') { renova(k, acao === 'insistir'); return desenhaJanela(); }
+  if (acao === 'liberar') { g.com[k] = null; J.msgs[k] = `${esc(m.nome)} se despediu.`; sincTec(g); return desenhaJanela(); }
+  if (acao === 'demitir') {
+    const multa = Math.max(1, Math.round(m.sal * m.contrato * 0.5));
+    J.custo += multa; g.com[k] = null; if (k === 'tec') { g.st.tecnicos++; if (g.flags.estavel) { aplica({ t: -6 }); g.flags.estavel = 0; } }
+    J.msgs[k] = `Demitido. A multa (−${multa} de caixa) sai no início da temporada.`; sincTec(g); return desenhaJanela();
+  }
+  if (acao === 'propor' || acao === 'propormais') {
+    const c = J.mercado[k][+i], mais = acao === 'propormais';
+    if (R() < chanceAceita(g, c, mais)) {
+      if (mais) c.sal = +(c.sal * 1.3).toFixed(2);
+      c.contratado = 1; g.com[k] = c; J.abertos[k] = false; registraContratacao(g, c); sincTec(g);
+      J.msgs[k] = `Contratado! ${esc(c.nome)} chega com ${fmtE(c.est)} estrelas.`;
+    } else c.recusou = pick(RECUSAS.concat([`Série ${g.serie}? Não, obrigado.`]));
+    return desenhaJanela();
+  }
+}
+
+/* ===================== JOGOS DECISIVOS (AO VIVO) =====================
+   Decisão do Brasileirão (título, acesso ou queda na última rodada), mata-mata da Libertadores
+   e final da Copa do Brasil. O resultado do jogo decide de verdade o que acontece na temporada.
+   Dá para assistir (bonequinhos no campo + lance a lance com os minutos) ou ver só o resultado.
+   Todos os sorteios usam R() na mesma ordem nos dois modos, então o Desafio do dia continua justo. */
+const ADV_BR = ['Tropeiros EC', 'Estrela do Vale', 'Unidos do Planalto', 'Leões da Colina', 'Ipê Amarelo FC', 'Mangue Seco EC', 'Aurora Paulista',
+  'Bandeirante da Serra', 'Pedra Branca AC', 'Sertanejo FC', 'Maré Alta EC', 'Fronteira do Sul'];
+const ADV_SUL = [['Deportivo Altiplano', 'Bolívia'], ['Unión Pampa Sur', 'Argentina'], ['Cóndores de Quito', 'Equador'], ['Real Cordillera', 'Chile'],
+  ['Celeste del Plata', 'Uruguai'], ['Club Yaguareté', 'Paraguai'], ['Caimanes del Caribe', 'Colômbia'], ['Incas del Cusco', 'Peru'],
+  ['Guacamayos del Orinoco', 'Venezuela'], ['Academia Pampeana', 'Argentina']];
+const APELIDOS_TIME = ['Fabinho', 'Neném', 'Duda', 'Gegê', 'Tchê', 'Marlon', 'Wesley', 'Baiano', 'Russo', 'Pezão', 'Jacaré', 'Biro', 'Tuca', 'Dinho', 'Peixinho'];
+const NOMES_ADV_BR = ['Robson', 'Cleiton', 'Alisson', 'Valdir', 'Josué', 'Anderson', 'Wagner', 'Éverson', 'Gilmar', 'Reinaldo', 'Ademir', 'Claudinei', 'Toninho'];
+const NOMES_ADV_SUL = ['Rojas', 'Benítez', 'Acosta', 'Pereyra', 'Quiroga', 'Saldívar', 'Mancuso', 'Ibarra', 'Villalba', 'Cárdenas', 'Ortúzar', 'Paredes', 'Cuevas'];
+/* 4-4-2 visto do nosso lado (atacamos para a direita): goleiro, 4 zagueiros/laterais, 4 meias (6 = Tião), 2 atacantes (10 = craque) */
+const FORM = [[.045, .5], [.2, .14], [.17, .38], [.17, .62], [.2, .86], [.37, .16], [.34, .4], [.34, .6], [.37, .84], [.46, .38], [.46, .62]];
+const TATICAS = {
+  normal: { nos: 1, eles: 1, txt: 'Começa o segundo tempo.' },
+  ataque: { nos: 1.35, eles: 1.3, txt: 'Segundo tempo: o time volta pra cima deles.' },
+  defesa: { nos: 0.6, eles: 0.68, txt: 'Segundo tempo: o time volta fechadinho, duas linhas de quatro.' },
+  bicho: { nos: 1.15, eles: 1, txt: 'Segundo tempo: bicho em dobro prometido, o time volta ligadíssimo.' },
+};
+const DICAS_ANALISTA = ['O lateral esquerdo deles sobe e não volta.', 'O goleiro deles sai mal do gol na bola alta.', 'Eles cansam depois dos 70 minutos.',
+  'Na bola parada, deixam o segundo pau livre.', 'O volante deles fica nervoso quando é pressionado.'];
+const COMO_GOL = ['de cabeça', 'de primeira', 'no ângulo', 'de fora da área', 'por cobertura', 'no rebote', 'de bicicleta', 'na raça, de carrinho', 'driblando o goleiro'];
+const TRAVE_TXT = ['acerta o poste', 'carimba o travessão', 'bate cruzado e a bola beija a trave'];
+const FORA_TXT = ['isola', 'chuta por cima', 'bate rente à trave', 'manda pra fora', 'pega mal na bola'];
+const embaralha = l => { const a = l.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function montaTime(g) { const n = embaralha(APELIDOS_TIME); return ['Paredão', n[0], n[1], n[2], n[3], n[4], 'Tião', n[5], n[6], n[7], g.craque]; }
+function coresAdv(g) { const fora = [g.cores[0], g.rival.cores[0]]; return pick(CORES.filter(c => !fora.includes(c[0]))); }
+
+/* ---------- monta o jogo ---------- */
+function criaPartida(g, pre, j) {
+  const f = pre.forca, s = pre.serie, queda = s === 'C' ? 19 : 17;
+  const m = { tipo: j.tipo, fase: j.fase, pos: j.pos, serie: s, ano: g.ano, Fus: f, tatica: 'normal', verm: [0, 0], amar: [{}, {}], fora: [[], []],
+    gols: [0, 0], custo: 0, ida: null, desempate: 'penaltis', mando: R() < 0.5 ? 'casa' : 'fora', esteveFora: 0, pens: null, penPlacar: null };
+  let adv;
+  if (j.tipo === 'lib') {
+    const [nome, pais] = pick(ADV_SUL); adv = { nome, pais, cores: coresAdv(g), sul: 1 };
+    m.Fadv = f * 0.5 + (DIF.A + 10 + 3 * j.fase) * 0.5 + rint(-5, 5);
+    m.comp = 'Libertadores'; m.rotulo = ['', '', 'quartas de final', 'semifinal', 'FINAL'][j.fase];
+    m.titulo = j.fase === 4 ? 'Final da Libertadores' : `${j.fase === 2 ? 'Quartas' : 'Semifinal'} da Libertadores`;
+    if (j.fase === 4 && g.ano >= 2019) { m.mando = 'neutro'; m.contexto = 'Final única, em campo neutro. O vencedor leva a taça.'; }
+    else { m.ida = [rint(0, 2), rint(0, 2)]; m.contexto = j.fase === 4 ? 'Final em dois jogos: hoje é a volta.' : j.fase === 3 ? 'Jogo de volta da semifinal.' : 'Jogo de volta das quartas de final.'; }
+  } else if (j.tipo === 'cb') {
+    adv = R() < 0.2 ? { nome: g.rival.nome, cores: g.rival.cores, rival: 1 } : { nome: pick(ADV_BR.filter(n => n !== g.clube)), cores: coresAdv(g) };
+    m.Fadv = f * 0.5 + Math.max(f, DIF.A + 15) * 0.5 + 2 + rint(-5, 5);
+    m.ida = [rint(0, 2), rint(0, 2)];
+    m.comp = 'Copa do Brasil'; m.rotulo = 'FINAL'; m.titulo = 'Final da Copa do Brasil'; m.contexto = 'Final em dois jogos: hoje é a volta.';
+  } else {
+    adv = R() < 0.25 ? { nome: g.rival.nome, cores: g.rival.cores, rival: 1 } : { nome: pick(ADV_BR.filter(n => n !== g.clube)), cores: coresAdv(g) };
+    m.Fadv = f + rint(-4, 4);
+    const nosNaFrente = j.tipo === 'titulo' ? j.pos === 1 : j.tipo === 'acesso' ? j.pos === 4 : j.tipo === 'vaga' ? j.pos === 6 : j.pos === queda - 1;
+    m.desempate = nosNaFrente ? 'nos' : 'eles';
+    m.comp = s === 'A' ? 'Brasileirão' : `Série ${s}`; m.rotulo = 'última rodada';
+    const A = adv.nome;
+    if (j.tipo === 'titulo' && s === 'A' && g.ano < 2003) {
+      const a = rint(0, 2); m.ida = [a, a]; m.mando = j.pos === 1 ? 'casa' : 'fora'; m.rotulo = 'FINAL'; m.titulo = 'Final do Brasileiro';
+      m.contexto = 'Final em dois jogos: hoje é a volta. No regulamento deste ano, quem fez a melhor campanha tem a vantagem do empate no agregado.';
+    } else if (j.tipo === 'titulo') {
+      m.titulo = 'Decisão do título!';
+      m.contexto = j.pos === 1 ? `Última rodada e confronto direto: você lidera com 1 ponto a mais que o ${A}.` : `Última rodada e confronto direto: o ${A} lidera com 1 ponto a mais que você.`;
+    } else if (j.tipo === 'vaga') {
+      m.titulo = 'Vaga na Libertadores';
+      m.contexto = j.pos === 6 ? `Última rodada: você é o 6º, a última vaga da Libertadores, 1 ponto à frente do ${A}.` : `Última rodada: o ${A} é o 6º, 1 ponto à sua frente. Quem ganhar vai à Libertadores.`;
+    } else if (j.tipo === 'acesso') {
+      m.titulo = 'Jogo do acesso';
+      m.contexto = j.pos === 4 ? `Última rodada: você é o 4º, a última vaga do acesso, 1 ponto à frente do ${A}.` : `Última rodada: o ${A} é o 4º, 1 ponto à sua frente. Quem ganhar sobe.`;
+    } else {
+      m.titulo = 'Briga contra a queda';
+      m.contexto = j.pos === queda - 1 ? `Última rodada: você é o ${queda - 1}º, 1 ponto à frente do ${A}, o primeiro da zona.` : `Última rodada: você está na zona, 1 ponto atrás do ${A}.`;
+    }
+  }
+  if (adv.rival) m.contexto += ` E é contra o rival.`;
+  m.adv = adv; m.nomes = [g.clube, adv.nome]; m.times = [g.time, embaralha(adv.sul ? NOMES_ADV_SUL : NOMES_ADV_BR).slice(0, 11)];
+  m.dica = g.com.ana && est(g, 'ana') >= 3 ? { nome: g.com.ana.nome, est: est(g, 'ana'), txt: pick(DICAS_ANALISTA) } : null;
+  return m;
+}
+function rotulos(m) {
+  switch (m.tipo) {
+    case 'titulo': return [m.serie === 'A' ? 'CAMPEÃO BRASILEIRO' : `CAMPEÃO DA SÉRIE ${m.serie}`, 'VICE'];
+    case 'acesso': return ['ACESSO', `FICA NA SÉRIE ${m.serie}`];
+    case 'vaga': return ['VAGA NA LIBERTADORES', 'FORA DA LIBERTADORES'];
+    case 'queda': return ['ESCAPA DA QUEDA', 'REBAIXADO'];
+    case 'cb': return ['CAMPEÃO DA COPA DO BRASIL', 'VICE'];
+    default: return m.fase === 4 ? ['CAMPEÃO DA AMÉRICA', 'VICE'] : [m.fase === 2 ? 'VAI À SEMIFINAL' : 'VAI À FINAL', 'ELIMINADO'];
+  }
+}
+function situacao(m, gl = m.gols) {
+  const d = (m.ida ? m.ida[0] - m.ida[1] : 0) + gl[0] - gl[1];
+  if (d > 0) return 'vence'; if (d < 0) return 'perde';
+  return m.desempate === 'nos' ? 'vence' : m.desempate === 'eles' ? 'perde' : 'penaltis';
+}
+function necessidade(m) {
+  const d = m.ida ? m.ida[0] - m.ida[1] : 0, pl = n => n === 1 ? '1 gol' : `${n} gols`;
+  if (m.desempate === 'penaltis') {
+    if (d === 0) return `Quem vencer leva. Empate${m.ida ? ' no agregado' : ''} vai para os pênaltis.`;
+    if (d > 0) return `${d === 1 ? 'O empate basta' : `Pode perder por até ${pl(d - 1)}`}. Perder por ${pl(d)} leva aos pênaltis.`;
+    return `Precisa vencer por ${pl(1 - d)} de diferença. Vencer por ${pl(-d)} leva aos pênaltis.`;
+  }
+  const x = m.desempate === 'nos' ? -d : 1 - d;
+  if (x === 0) return 'O empate basta.'; if (x === 1) return 'Só a vitória serve.';
+  return x > 1 ? `Precisa vencer por ${pl(x)} de diferença.` : `Pode perder por até ${pl(-x)} de diferença.`;
+}
+
+/* ---------- motor do jogo ---------- */
+function taxa(m, lado, min) {
+  let l = (1.15 / 90) * Math.exp((lado === 0 ? m.Fus - m.Fadv : m.Fadv - m.Fus) / 20);
+  if (m.mando !== 'neutro') l *= (m.mando === 'casa') === (lado === 0) ? 1.12 : 0.9;
+  l *= lado === 0 ? TATICAS[m.tatica].nos : TATICAS[m.tatica].eles;
+  l *= Math.pow(0.7, m.verm[lado]) * Math.pow(1.22, m.verm[1 - lado]);
+  if (min >= 75) { const s = situacao(m); if (s !== 'penaltis') l *= (s === 'perde') === (lado === 0) ? 1.25 : 1.08; } // quem está perdendo se joga
+  return l;
+}
+function quem(m, lado, tipo) {
+  const w = tipo === 'ataque' ? [0, .35, .35, .35, .35, .9, .7, .9, .9, 2.2, 3.2] : [0, 1.4, 1.4, 1.4, 1.4, 1, 1, 1, 1, .5, .5];
+  const nomes = m.times[lado], ok = nomes.map((n, i) => m.fora[lado].includes(n) ? 0 : w[i]);
+  let x = R() * ok.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < ok.length; i++) { x -= ok[i]; if (x <= 0 && ok[i]) return nomes[i]; }
+  return nomes[10];
+}
+function golEv(m, lado, j, ev, como) {
+  m.gols[lado]++;
+  ev.push({ tipo: 'gol', lado, j, pen: como === 'de pênalti' ? 1 : 0, txt: lado === 0 ? `GOL DO ${m.nomes[0].toUpperCase()}! ${j}, ${como}.` : `Gol do ${m.nomes[1]}. ${j}, ${como}.` });
+}
+function chance(m, lado, ev) {
+  const j = quem(m, lado, 'ataque'), gk = m.times[1 - lado][0];
+  if (R() < 0.06) {
+    ev.push({ tipo: 'pen', lado, j, txt: `PÊNALTI para o ${m.nomes[lado]}! ${j} vai para a cobrança.` });
+    const r = R();
+    if (r < 0.78) return golEv(m, lado, j, ev, 'de pênalti');
+    ev.push(r < 0.9 ? { tipo: 'defesa', lado, j, pen: 1, txt: `${gk} pega o pênalti de ${j}!` } : { tipo: 'fora', lado, j, pen: 1, txt: `${j} manda o pênalti por cima do gol!` });
+    return;
+  }
+  const r = R();
+  if (r < 0.2) {
+    if (R() < 0.05) {
+      ev.push({ tipo: 'gol', lado, j, txt: `${lado === 0 ? 'GOL DO ' + m.nomes[0].toUpperCase() + '!' : 'Gol do ' + m.nomes[1] + '.'} ${j} comemora...` });
+      ev.push({ tipo: 'var', lado, txt: 'O VAR chama o árbitro... gol anulado por impedimento!' });
+      return;
+    }
+    return golEv(m, lado, j, ev, pick(COMO_GOL));
+  }
+  if (r < 0.27) ev.push({ tipo: 'trave', lado, j, txt: `NA TRAVE! ${j} ${pick(TRAVE_TXT)}.` });
+  else if (r < 0.6) ev.push({ tipo: 'defesa', lado, j, txt: lado === 0 ? `${gk} faz grande defesa no chute de ${j}.` : `${gk} salva! Defesaça no chute de ${j}.` });
+  else ev.push({ tipo: 'fora', lado, j, txt: `${j} ${pick(FORA_TXT)}.` });
+}
+function expulsa(m, lado, ev, segundo, j) {
+  if (m.verm[lado] >= 3) return;
+  j = j || quem(m, lado, 'falta'); m.fora[lado].push(j); m.verm[lado]++;
+  ev.push({ tipo: 'vermelho', lado, j, txt: segundo ? `Segundo amarelo: ${j} está expulso!` : `VERMELHO direto para ${j}! Entrada criminosa.` });
+}
+function falta(m, lado, ev) {
+  const j = quem(m, lado, 'falta'), vit = quem(m, 1 - lado, 'ataque');
+  if (R() < 0.45) {
+    if (m.amar[lado][j]) return expulsa(m, lado, ev, 1, j);
+    m.amar[lado][j] = 1; ev.push({ tipo: 'amarelo', lado, j, vit, txt: `Amarelo para ${j}, que derrubou ${vit}.` });
+  } else if (R() < 0.5) ev.push({ tipo: 'falta', lado, j, vit, txt: `Falta dura de ${j} em ${vit}.` });
+}
+function simulaTempo(m, tempo) {
+  const base = tempo === 1 ? 0 : 45, acr = tempo === 1 ? rint(1, 4) : rint(3, 7), ticks = [];
+  for (let i = 1; i <= 45 + acr; i++) {
+    const min = base + Math.min(i, 45), ev = [];
+    if (i === 1) ev.push({ tipo: 'apito', ini: 1, txt: tempo === 1 ? 'Bola rolando!' : TATICAS[m.tatica].txt });
+    for (const lado of [0, 1]) {
+      if (R() < taxa(m, lado, min) / 0.2254) chance(m, lado, ev);
+      if (R() < 0.03) falta(m, lado, ev);
+      if (R() < 0.0009) expulsa(m, lado, ev, 0);
+    }
+    if (i === 45) ev.push({ tipo: 'apito', txt: `${acr} minuto${acr > 1 ? 's' : ''} de acréscimo.` });
+    if (i > 1 && situacao(m) === 'perde') m.esteveFora = 1;
+    if (i === 45 + acr) ev.push({ tipo: 'apito', fim: tempo, txt: tempo === 1 ? 'Fim do primeiro tempo.' : situacao(m) === 'penaltis' ? 'Fim do tempo normal. Vai para os pênaltis!' : 'Fim de jogo!' });
+    ticks.push({ rot: i <= 45 ? `${base + i}'` : `${base + 45}+${i - 45}'`, ev });
+  }
+  return ticks;
+}
+function penaltis(m) {
+  const ordem = l => [10, 9, 6, 5, 7, 8, 2, 3, 1, 4, 0].map(i => m.times[l][i]).filter(n => !m.fora[l].includes(n));
+  const os = [ordem(0), ordem(1)], p = [0, 0], c = [0, 0], seq = [], prim = R() < 0.5 ? 0 : 1;
+  for (let k = 0; k < 60; k++) {
+    const lado = k % 2 === 0 ? prim : 1 - prim, j = os[lado][c[lado] % os[lado].length], gk = m.times[1 - lado][0]; c[lado]++;
+    const ok = R() < 0.75; if (ok) p[lado]++;
+    seq.push({ tipo: 'cob', lado, j, ok, p: [...p], txt: ok ? `${j} cobra e marca.` : pick([`${gk} defende a cobrança de ${j}!`, `${j} chuta na trave!`, `${j} isola a cobrança!`]) });
+    if (c[0] <= 5 && c[1] <= 5) { const resta = [5 - c[0], 5 - c[1]]; if (p[0] > p[1] + resta[1] || p[1] > p[0] + resta[0]) break; }
+    if (c[0] >= 5 && c[0] === c[1] && p[0] !== p[1]) break;
+  }
+  m.pens = seq; m.penPlacar = p;
+}
+function segundoTempo(m) {
+  m.t2 = simulaTempo(m, 2);
+  if (situacao(m) === 'penaltis') penaltis(m);
+  let s = situacao(m); if (s === 'penaltis') s = m.penPlacar[0] > m.penPlacar[1] ? 'vence' : 'perde';
+  m.vence = s === 'vence'; m.virada = m.vence && m.esteveFora;
+}
+function placarTxt(m) {
+  return `${m.gols[0]} x ${m.gols[1]}${m.ida ? ` (agregado ${m.ida[0] + m.gols[0]} x ${m.ida[1] + m.gols[1]})` : ''}${m.penPlacar ? `, pênaltis ${m.penPlacar[0]} x ${m.penPlacar[1]}` : ''}`;
+}
+
+/* ---------- fluxo: antes da tela da temporada ---------- */
+function jogaDecisoes(g, pre, done) {
+  if (!pre.jogos.length) return done();
+  if (!g.time) g.time = montaTime(g);
+  const fila = pre.jogos.slice();
+  const proximo = () => {
+    const j = fila.shift(); if (!j) return done();
+    const m = criaPartida(g, pre, j);
+    m.t1 = simulaTempo(m, 1);
+    introPartida(g, m, aoVivo => {
+      const fecha = () => { conclui(m); proximo(); };
+      if (aoVivo && VEL() > 0) partidaAoVivo(g, m, fecha);
+      else { segundoTempo(m); resultadoRapido(g, m, fecha); }
+    });
+  };
+  const conclui = m => {
+    const ok = m.vence, queda = pre.serie === 'C' ? 19 : 17;
+    if (m.tipo === 'lib') { pre.idxL = ok ? m.fase + 1 : m.fase; if (ok && m.fase < 4) fila.unshift({ tipo: 'lib', fase: m.fase + 1 }); }
+    else if (m.tipo === 'cb') pre.idxCB = ok ? 7 : 6;
+    else if (m.tipo === 'titulo') pre.pos = ok ? 1 : 2;
+    else if (m.tipo === 'acesso') pre.pos = ok ? 4 : 5;
+    else if (m.tipo === 'vaga') pre.pos = ok ? 6 : 7;
+    else if (m.tipo === 'queda') pre.pos = ok ? queda - 1 : queda;
+    pre.extra.c += m.custo; if (m.virada) pre.extra.t += 2;
+    if (m.adv.rival) { const [a, b] = m.gols, cl = g.st.classicos; if (a > b) cl.v++; else if (a < b) cl.d++; else cl.e++; pre.extra.t += ok ? 3 : -3; }
+    const rot = rotulos(m)[ok ? 0 : 1], sd = g.st.decisivas;
+    sd.j++; if (ok) sd.v++;
+    const peso = !ok ? 0 : m.tipo === 'lib' ? (m.fase === 4 ? 10 : m.fase + 1) : m.tipo === 'cb' ? 8 : m.tipo === 'titulo' ? (m.serie === 'A' ? 9 : 5) : m.tipo === 'acesso' ? 5 : m.tipo === 'vaga' ? 3 : 4;
+    const txt = `${m.titulo.replace('!', '')} ${g.ano}: ${m.gols[0]} x ${m.gols[1]} no ${m.adv.nome}${m.penPlacar ? ` (${m.penPlacar[0]} x ${m.penPlacar[1]} nos pênaltis)` : ''}`;
+    if (peso && (!sd.marcante || peso >= sd.marcante.peso)) sd.marcante = { peso, txt };
+    pre.feitos.push({ comp: m.tipo === 'lib' ? 'Libertadores' : m.tipo === 'cb' ? 'Copa do Brasil' : 'Série ' + m.serie, rot: m.tipo === 'lib' || m.tipo === 'cb' ? `${m.rotulo.toLowerCase()} (${m.ida ? 'volta' : 'jogo único'})` : m.rotulo, txt: `${m.gols[0]}x${m.gols[1]} ${m.adv.nome}${m.ida ? ` (ida ${m.ida[0]}x${m.ida[1]})` : ''}${m.penPlacar ? `, pên. ${m.penPlacar[0]}x${m.penPlacar[1]}` : ''} · ${rot}` });
+  };
+  proximo();
+}
+function vsHtml(g, m) {
+  return `<div class="jg-vs"><b>${escudo(g.cores[0], g.cores[1])}${esc(g.clube)}</b><i>x</i><b>${escudo(m.adv.cores[0], m.adv.cores[1])}${esc(m.adv.nome)}${m.adv.pais ? `<small>${esc(m.adv.pais)}</small>` : ''}</b></div>`;
+}
+function introPartida(g, m, cb) {
+  const mando = { casa: 'Em casa, com o estádio lotado.', fora: 'Fora de casa, com a torcida deles empurrando.', neutro: 'Campo neutro, as duas torcidas dividem o estádio.' }[m.mando];
+  mostraTelao(`<span class="k">${esc(m.comp)} · ${esc(m.rotulo)} · ${m.ano}</span><h2>${esc(m.titulo)}</h2>
+    ${vsHtml(g, m)}
+    <p>${esc(m.contexto)} ${esc(mando)}</p>
+    ${m.ida ? `<p class="jg-ida">Jogo de ida: ${esc(g.clube)} ${m.ida[0]} x ${m.ida[1]} ${esc(m.adv.nome)}</p>` : ''}
+    <p class="jg-need">${esc(necessidade(m))}</p>
+    ${m.dica ? `<p class="nota">Relatório do analista ${esc(m.dica.nome)} ${estrelas(m.dica.est)}: "${esc(m.dica.txt)}"</p>` : ''}
+    <div class="acoes"><button class="bt am" id="assiste" type="button">Assistir ao jogo</button><button class="bt vz" id="segue" type="button">Só o resultado</button></div>`, () => cb(false));
+  $('#assiste').onclick = () => { fechaTelao(); cb(true); };
+  setTimeout(() => { const b = $('#assiste'); if (b) b.focus({ preventScroll: true }); }, 60);
+}
+function itemFeed(m, ev, rot) {
+  const tags = { gol: ['GOL', 'gol'], var: ['VAR', 'var'], pen: ['PÊNALTI', 'pen'], trave: ['TRAVE', 'trave'], defesa: ['DEFESA', ''], fora: ['PRA FORA', ''],
+    amarelo: ['AMARELO', 'am'], vermelho: ['VERMELHO', 'verm'], falta: ['FALTA', ''], apito: ['APITO', 'apito'], cob: [ev.ok ? 'CONVERTEU' : 'PERDEU', ev.ok ? 'gol' : 'verm'] };
+  const [t, c] = tags[ev.tipo], cor = ev.lado == null ? 'transparent' : ev.lado === 0 ? 'var(--jg-c0)' : 'var(--jg-c1)';
+  return `<li style="border-left-color:${cor}"><b>${esc(rot)}</b><span class="jt ${c}">${t}</span><span>${esc(ev.txt)}</span></li>`;
+}
+function resultadoRapido(g, m, done) {
+  const [ok, ruim] = rotulos(m), lances = [...m.t1, ...m.t2].flatMap(t => t.ev.filter(e => ['gol', 'var', 'vermelho'].includes(e.tipo) || (e.tipo !== 'gol' && e.pen)).map(e => itemFeed(m, e, t.rot)));
+  mostraTelao(`<span class="k">${esc(m.comp)} · ${esc(m.rotulo)} · ${m.ano}</span><h2>${m.vence ? esc(ok) + '!' : esc(ruim)}</h2>
+    ${vsHtml(g, m)}
+    <div class="jg-final"><span>${m.gols[0]}</span><i>x</i><span>${m.gols[1]}</span></div>
+    <p class="jg-need" style="text-align:center">${esc(placarTxt(m))}</p>
+    ${lances.length ? `<ol class="jg-feed curto">${lances.join('')}</ol>` : '<p class="nota">Jogo sem gols.</p>'}
+    <button class="bt am" id="segue" type="button">Continuar</button>`, done);
+  $('#painel').style.setProperty('--jg-c0', g.cores[0]); $('#painel').style.setProperty('--jg-c1', m.adv.cores[0]);
+}
+
+/* ---------- ao vivo: placar, lance a lance e o campinho com os bonequinhos ---------- */
+function partidaAoVivo(g, m, done) {
+  const sg = [siglas(g.clube), siglas(m.adv.nome)]; if (sg[1] === sg[0]) sg[1] = m.adv.nome.slice(0, 3).toUpperCase();
+  const [rOk, rRuim] = rotulos(m);
+  mostraTelao(`<div class="jogo">
+    <div class="jg-topo"><span class="k">${esc(m.comp)} · ${esc(m.rotulo)} · ${m.ano}</span><span class="jg-min" id="jgMin">0'</span></div>
+    <div class="jg-placar">
+      <div class="jg-time">${escudo(g.cores[0], g.cores[1])}<b>${esc(sg[0])}</b><small>${esc(g.clube)}</small></div>
+      <div class="jg-gols" aria-live="polite"><span id="jgG0">0</span><i>x</i><span id="jgG1">0</span></div>
+      <div class="jg-time dir">${escudo(m.adv.cores[0], m.adv.cores[1])}<b>${esc(sg[1])}</b><small>${esc(m.adv.nome)}</small></div>
+    </div>
+    <p class="jg-sit"><span>${m.ida ? `Ida: ${m.ida[0]} x ${m.ida[1]}. ` : ''}${esc(necessidade(m))}</span><b id="jgSit"></b></p>
+    <div class="jg-campo"><canvas id="jgCv" role="img" aria-label="Campo com os jogadores dos dois times"></canvas><div class="jg-flash" id="jgFlash"></div><div class="jg-pen oculto" id="jgPen"></div></div>
+    <div class="jg-ctrl" id="jgCtrl"></div>
+    <div class="jg-lado"><h3>Lance a lance</h3><ol class="jg-feed" id="jgFeed"></ol></div>
+  </div>`, null, 'jogo');
+  const painel = $('#painel'); painel.style.setProperty('--jg-c0', g.cores[0]); painel.style.setProperty('--jg-c1', m.adv.cores[0]);
+  const cv = $('#jgCv'), ctx = cv.getContext('2d'), W = 640, H = 380, dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+  const cena = novaCena(g, m), feed = $('#jgFeed'), ctrl = $('#jgCtrl');
+  let fase = 'j1', lista = m.t1, i = 0, fila = [], espera = 0, acc = 0, vel = 1, vivo = true, rapido = false, rot = "0'", tPrev = performance.now();
+  const dG = [0, 0], dP = [0, 0], TICK = 330;
+  const flash = (txt, cls = '') => {
+    if (rapido) return; const f = $('#jgFlash'); if (!f) return;
+    f.textContent = txt; f.className = 'jg-flash'; void f.offsetWidth; f.className = 'jg-flash on ' + cls; f.style.animationDuration = (1.5 / vel) + 's';
+    clearTimeout(flash.t); flash.t = setTimeout(() => { f.className = 'jg-flash'; }, 1500 / vel);
+  };
+  const mostra = () => {
+    $('#jgG0').textContent = dG[0]; $('#jgG1').textContent = dG[1];
+    const s = situacao(m, dG), el = $('#jgSit'), txt = s === 'vence' ? rOk : s === 'perde' ? rRuim : 'PÊNALTIS';
+    if (fase === 'fim') { el.textContent = 'Final: ' + (m.vence ? rOk : rRuim); el.className = m.vence ? 'ok' : 'ruim'; }
+    else { el.textContent = 'Do jeito que está: ' + (fase === 'pen' ? `pênaltis ${dP[0]} x ${dP[1]}` : txt); el.className = fase === 'pen' ? 'pen' : s === 'vence' ? 'ok' : s === 'perde' ? 'ruim' : 'pen'; }
+    const p = $('#jgPen'); if (fase === 'pen' || m.penPlacar && fase === 'fim') { p.classList.remove('oculto'); p.textContent = `Pênaltis ${dP[0]} x ${dP[1]}`; }
+  };
+  const processa = ev => {
+    feed.insertAdjacentHTML('afterbegin', itemFeed(m, ev, ev.tipo === 'cob' ? 'pên.' : rot));
+    const c = cena;
+    switch (ev.tipo) {
+      case 'gol': dG[ev.lado]++; if (!rapido) { lance(c, ev.lado, 'gol', ev.j, ev.pen, () => flash('GOL!', ev.lado ? 'deles' : '')); espera = 300; } break;
+      case 'var': dG[ev.lado]--; flash('ANULADO', 'var'); espera = 1300; break;
+      case 'pen': if (!rapido) { penalti(c, ev.lado, ev.j); flash('PÊNALTI!', 'pen'); espera = 400; } break;
+      case 'trave': if (!rapido) { lance(c, ev.lado, 'trave', ev.j, 0, () => flash('NA TRAVE!', 'trave')); espera = 300; } break;
+      case 'defesa': if (!rapido) { lance(c, ev.lado, 'defesa', ev.j, ev.pen, () => ev.pen && flash('DEFENDEU!', 'trave')); espera = 200; } break;
+      case 'fora': if (!rapido) { lance(c, ev.lado, 'fora', ev.j, ev.pen); espera = 150; } break;
+      case 'amarelo': case 'vermelho': case 'falta': {
+        const p = acha(c, ev.lado, ev.j);
+        if (ev.tipo === 'vermelho') { flash('VERMELHO!', 'verm'); if (p) { if (rapido) { p.fora = 1; p.y = -0.3; } else { p.cartao = { cor: '#e0392b', t: 1.6 }; c.rotulo = { p, t: 1.8 }; c.timers.push({ t: 1.2, cb: () => { p.fora = 1; } }); } } espera = 1400; }
+        else if (!rapido && p) { if (ev.tipo === 'amarelo') p.cartao = { cor: '#ffd21f', t: 1.3 }; const v = acha(c, 1 - ev.lado, ev.vit); if (v) v.caido = 0.9; c.rotulo = { p, t: 1.3 }; espera = 650; }
+        break;
+      }
+      case 'apito': if (ev.ini && !rapido) reinicia(c); if (ev.fim === 1) flash('INTERVALO', 'apito'); espera = 600; break;
+      case 'cob': dP[ev.lado] += ev.ok ? 1 : 0; if (!rapido) { cobranca(c, ev.lado, ev.j, ev.ok, () => flash(ev.ok ? 'GOL!' : 'PERDEU!', ev.ok ? (ev.lado ? 'deles' : '') : 'verm')); espera = 350; } break;
+    }
+    if (rapido) espera = 0;
+    mostra();
+  };
+  const fimDaLista = () => {
+    if (fase === 'j1') { fase = 'int'; vestiario(); }
+    else if (fase === 'j2' && m.pens) { fase = 'pen'; lista = m.pens; i = 0; cena.modoPen = 1; reinicia(cena); flash('PÊNALTIS', 'pen'); espera = 1200; mostra(); }
+    else termina();
+  };
+  const avanca = () => {
+    if (i < lista.length) { const t = lista[i++]; if (fase === 'pen') fila.push(t); else { rot = t.rot; $('#jgMin').textContent = t.rot; fila.push(...t.ev); } }
+    else fimDaLista();
+  };
+  const desenhaCtrl = () => {
+    ctrl.innerHTML = `<div class="jg-vel" role="group" aria-label="Velocidade">${[1, 2, 4].map(v => `<button type="button" class="bt mini vz" data-v="${v}" aria-pressed="${vel === v}">${v}x</button>`).join('')}</div>
+      <button type="button" class="bt mini cl" id="jgPula">${fase === 'j1' ? 'Pular para o intervalo' : 'Pular para o fim'}</button>`;
+    ctrl.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { vel = +b.dataset.v; desenhaCtrl(); });
+    $('#jgPula').onclick = pula;
+  };
+  const pula = () => {
+    rapido = true; const alvo = fase === 'j1' ? ['j1'] : ['j2', 'pen'];
+    cena.passos = []; cena.festa = null;
+    for (let k = 0; k < 400 && alvo.includes(fase); k++) { while (fila.length) processa(fila.shift()); if (alvo.includes(fase)) avanca(); }
+    rapido = false; espera = 0; if (fase !== 'fim') reinicia(cena); mostra();
+  };
+  const vestiario = () => {
+    const tec = (g.tecnico && g.tecnico.nome) || 'o técnico';
+    ctrl.innerHTML = `<div class="jg-vest"><b>Intervalo. No vestiário, ${esc(tec)} olha para você: "Presidente, quer falar com o grupo?"</b>
+      <div class="jg-opts">
+        <button type="button" class="bt mini am" data-t="ataque">Pra cima deles!<small>mais chances para os dois lados</small></button>
+        <button type="button" class="bt mini cl" data-t="defesa">Segura o resultado<small>jogo mais fechado e truncado</small></button>
+        <button type="button" class="bt mini cl" data-t="bicho">Bicho em dobro<small>time mais ligado · caixa −3</small></button>
+        <button type="button" class="bt mini vz" data-t="normal">Deixa com o técnico<small>sem mudanças</small></button>
+      </div></div>`;
+    ctrl.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
+      m.tatica = b.dataset.t; if (m.tatica === 'bicho') m.custo = -3;
+      segundoTempo(m); fase = 'j2'; lista = m.t2; i = 0; desenhaCtrl();
+    });
+    const b0 = ctrl.querySelector('[data-t]'); if (b0) b0.focus({ preventScroll: true });
+  };
+  const termina = () => {
+    fase = 'fim'; rapido = false; mostra(); cena.passos = []; cena.modoPen = 0; cena.chutador = null;
+    if (m.vence) { flash(rOk.split(' ')[0] === 'CAMPEÃO' ? 'CAMPEÃO!' : rOk, 'campeao'); confete(cena, [g.cores[0], g.cores[1], '#ffd21f']); cena.festa = { lado: 0, t: 999 }; }
+    else { flash('FIM DE JOGO', 'apito'); cena.festa = { lado: 1, t: 999 }; }
+    ctrl.innerHTML = `<div class="jg-fim ${m.vence ? 'ok' : 'ruim'}"><b>${esc(m.vence ? rOk : rRuim)}</b><span>${esc(placarTxt(m))}${m.custo ? ' · bicho em dobro: caixa −3' : ''}</span></div>
+      <button class="bt am" id="segue" type="button">Continuar</button>`;
+    $('#segue').onclick = () => { vivo = false; fechaTelao(); done(); };
+    $('#segue').focus({ preventScroll: true });
+  };
+  const quadro = t => {
+    if (!vivo || !cv.isConnected) return;
+    const dt = Math.min(0.05, (t - tPrev) / 1000), dv = dt * vel; tPrev = t;
+    if (fase === 'j1' || fase === 'j2' || fase === 'pen') {
+      if (espera > 0) espera -= dv * 1000;
+      else if (cena.passos.length) { /* espera a jogada terminar */ }
+      else if (fila.length) processa(fila.shift());
+      else { acc += dv * 1000; if (acc >= (fase === 'pen' ? 500 : TICK)) { acc = 0; avanca(); } }
+    }
+    moveCena(cena, dv); desenhaCena(ctx, cena, W, H);
+    requestAnimationFrame(quadro);
+  };
+  desenhaCtrl(); mostra(); requestAnimationFrame(quadro);
+}
+
+/* ---------- a cena do campinho ---------- */
+function novaCena(g, m) {
+  const perto = (a, b) => a.toLowerCase() === b.toLowerCase();
+  const gk = [perto(g.cores[0], '#111111') ? '#ff6a13' : '#2b2b2b', ['#f2c400', '#ffd21f', '#ff6a13'].some(c => perto(m.adv.cores[0], c)) ? '#7d3cff' : '#f2c400'];
+  const jog = [];
+  for (const lado of [0, 1]) FORM.forEach(([x, y], i) => {
+    const bx = lado ? 1 - x : x, by = lado ? 1 - y : y;
+    jog.push({ lado, i, bx, by, x: bx, y: by, f: Math.random() * 6, mov: 0, nome: m.times[lado][i], fora: 0, caido: 0, cartao: null,
+      cor: i === 0 ? [gk[lado], '#151a15'] : lado === 0 ? g.cores : m.adv.cores, pele: PELES[(i * 5 + lado * 2) % PELES.length] });
+  });
+  return { jog, bola: { x: .5, y: .5 }, alvo: null, passos: [], posse: 0, festa: null, reinicio: 0, rotulo: null, confete: [], timers: [], t: 0, modoPen: 0, chutador: null };
+}
+const acha = (c, lado, nome) => c.jog.find(p => p.lado === lado && p.nome === nome && !p.fora);
+function anda(o, x, y, passo) {
+  const dx = x - o.x, dy = y - o.y, d = Math.hypot(dx, dy);
+  if (d <= passo || d < 1e-4) { o.x = x; o.y = y; return true; }
+  o.x += dx / d * passo; o.y += dy / d * passo; return false;
+}
+function reinicia(c) { c.bola.x = .5; c.bola.y = .5; c.alvo = null; c.reinicio = 1.1; c.festa = null; c.chutador = null; }
+function lance(c, lado, tipo, nome, pen, aoChutar) {
+  const dir = lado === 0 ? 1 : -1, gx = lado === 0 ? 1 : 0, p = acha(c, lado, nome);
+  c.posse = lado; c.alvo = null; c.chutador = p || null; c.festa = null;
+  const passos = [];
+  if (!pen) {
+    const ay = clamp(p ? p.y : .5, .25, .75), ax = gx - dir * (.15 + Math.random() * .1);
+    passos.push({ x: ax, y: ay, v: .75 }, { espera: .18 });
+  }
+  const gy = .5 + (Math.random() * .1 - .05);
+  if (tipo === 'gol') passos.push({ x: gx + dir * .016, y: gy, v: 1.9, cb: () => { aoChutar && aoChutar(); c.festa = { lado, t: 1.6 }; if (p) c.rotulo = { p, t: 1.8 }; } }, { espera: 1.6, cb: () => reinicia(c) });
+  else if (tipo === 'trave') { const py = Math.random() < .5 ? .446 : .554; passos.push({ x: gx, y: py, v: 1.9, cb: aoChutar }, { x: gx - dir * .16, y: py + (py < .5 ? -.2 : .2), v: .9 }); }
+  else if (tipo === 'defesa') {
+    passos.push({ x: gx - dir * .012, y: gy, v: 1.8, cb: () => { aoChutar && aoChutar(); const gk = c.jog.find(q => q.lado !== lado && q.i === 0); if (gk) { gk.caido = .7; gk.y = gy; c.rotulo = { p: gk, t: 1.2 }; } } },
+      { x: gx - dir * .02, y: Math.random() < .5 ? .08 : .92, v: .8 });
+  } else passos.push({ x: gx + dir * .03, y: .5 + (Math.random() < .5 ? -1 : 1) * (.13 + Math.random() * .08), v: 1.7 }, { espera: .3, cb: () => { c.bola.x = gx - dir * .05; c.bola.y = .5; c.posse = 1 - lado; } });
+  if (pen) passos.unshift({ espera: .25 });
+  c.passos = passos;
+}
+function penalti(c, lado, nome) {
+  const dir = lado === 0 ? 1 : -1, gx = lado === 0 ? 1 : 0, p = acha(c, lado, nome);
+  c.alvo = null; c.posse = lado; c.chutador = p || null;
+  c.passos = [{ x: gx - dir * .105, y: .5, v: 1.2 }, { espera: .5 }];
+}
+function cobranca(c, lado, nome, ok, aoChutar) {
+  const p = acha(c, lado, nome); c.chutador = p || null; c.bola.x = .895; c.bola.y = .5;
+  const gy = .5 + (Math.random() * .08 - .04);
+  c.passos = [{ espera: .45 }, ok ? { x: 1.016, y: gy, v: 1.9, cb: aoChutar } : Math.random() < .5
+    ? { x: .99, y: gy, v: 1.8, cb: () => { aoChutar && aoChutar(); const gk = c.jog.find(q => q.lado !== lado && q.i === 0); if (gk) gk.caido = .7; } }
+    : { x: 1.03, y: .5 + (Math.random() < .5 ? -.15 : .15), v: 1.7, cb: aoChutar }, { espera: .6 }];
+}
+function confete(c, cores) { for (let k = 0; k < 140; k++) c.confete.push({ x: Math.random(), y: -Math.random() * .6, vx: (Math.random() - .5) * .08, vy: .12 + Math.random() * .22, r: Math.random() * 6, cor: cores[k % cores.length] }); }
+function moveCena(c, dt) {
+  c.t += dt; const b = c.bola;
+  for (const tm of c.timers) { tm.t -= dt; if (tm.t <= 0 && !tm.ok) { tm.ok = 1; tm.cb(); } } c.timers = c.timers.filter(tm => !tm.ok);
+  if (c.passos.length) {
+    const p = c.passos[0];
+    if (p.espera != null) { p.espera -= dt; if (p.espera <= 0) { c.passos.shift(); p.cb && p.cb(); } }
+    else if (anda(b, p.x, p.y, p.v * dt)) { c.passos.shift(); p.cb && p.cb(); }
+  } else if (!c.modoPen && c.reinicio <= 0) {
+    if (!c.alvo || anda(b, c.alvo.x, c.alvo.y, .3 * dt)) {
+      if (Math.random() < .3) c.posse = 1 - c.posse;
+      const dir = c.posse === 0 ? 1 : -1; c.alvo = { x: clamp(.5 + dir * (Math.random() * .36 - .06), .12, .88), y: .12 + Math.random() * .76 }; c.chutador = null;
+    }
+  }
+  if (c.reinicio > 0) c.reinicio -= dt;
+  if (c.festa && c.festa.t < 900) { c.festa.t -= dt; if (c.festa.t <= 0) c.festa = null; }
+  if (c.rotulo) { c.rotulo.t -= dt; if (c.rotulo.t <= 0) c.rotulo = null; }
+  // quem corre atrás da bola
+  const caca = [0, 1].map(l => { let best = null, bd = 9; for (const p of c.jog) if (p.lado === l && p.i && !p.fora) { const d = Math.hypot(p.x - b.x, p.y - b.y); if (d < bd) { bd = d; best = p; } } return best; });
+  for (const p of c.jog) {
+    const dir = p.lado === 0 ? 1 : -1; let tx, ty, v = .22;
+    if (p.fora) { tx = p.x; ty = -.3; v = .14; }
+    else if (c.festa && c.festa.lado === p.lado && p.i) { const cx = p.lado === 0 ? .9 : .1; tx = cx - dir * ((p.i % 4) * .025); ty = .07 + Math.floor(p.i / 4) * .045; v = .45; }
+    else if (c.modoPen) {
+      if (p.i === 0) { const def = c.chutador ? 1 - c.chutador.lado : 1; tx = p.lado === def ? .985 : .55 + p.lado * .04; ty = p.lado === def ? .5 : .62; }
+      else if (p === c.chutador) { tx = .86; ty = .5; v = .5; }
+      else { tx = .5 + ((p.i % 5) - 2) * .03; ty = .42 + p.lado * .16 + Math.floor(p.i / 6) * .03; }
+    } else if (c.reinicio > 0) { tx = p.bx; ty = p.by; v = .6; }
+    else if (p.i === 0) { tx = p.bx; ty = .5 + (b.y - .5) * .35; }
+    else if (p === c.chutador || (!c.chutador && p === caca[p.lado])) { tx = b.x - dir * .012; ty = b.y; v = p === c.chutador ? .9 : .34; }
+    else { const tem = c.posse === p.lado, sh = (b.x - .5) * .5 + (tem ? dir * .07 : -dir * .03); tx = p.bx + sh + Math.sin(c.t * .9 + p.i * 1.7) * .012; ty = p.by * .72 + b.y * .28 + Math.cos(c.t * .8 + p.i) * .012; }
+    if (!p.fora) { tx = clamp(tx, .012, .988); ty = clamp(ty, .02, .98); }
+    if (p.caido > 0) { p.caido -= dt; p.mov = 0; continue; }
+    const x0 = p.x, y0 = p.y; anda(p, tx, ty, v * dt); const mv = Math.hypot(p.x - x0, p.y - y0);
+    p.mov = mv > 1e-4; p.f += mv * 90;
+    if (p.cartao) { p.cartao.t -= dt; if (p.cartao.t <= 0) p.cartao = null; }
+  }
+  for (const k of c.confete) { k.x += k.vx * dt; k.y += k.vy * dt; k.r += dt * 6; if (k.y > 1.05) { k.y = -.05; k.x = Math.random(); } }
+}
+function desenhaCena(ctx, c, W, H) {
+  const x0 = 22, y0 = 16, w = W - 44, h = H - 32, X = x => x0 + x * w, Y = y => y0 + y * h;
+  for (let k = 0; k < 12; k++) { ctx.fillStyle = k % 2 ? '#0f7640' : '#0c6636'; ctx.fillRect(k * W / 12, 0, W / 12 + 1, H); }
+  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2;
+  ctx.strokeRect(x0, y0, w, h);
+  ctx.beginPath(); ctx.moveTo(X(.5), y0); ctx.lineTo(X(.5), y0 + h); ctx.stroke();
+  ctx.beginPath(); ctx.arc(X(.5), Y(.5), h * .135, 0, 7); ctx.stroke();
+  for (const s of [0, 1]) {
+    const dx = s ? -1 : 1, bx = s ? x0 + w : x0;
+    ctx.strokeRect(bx, Y(.205), dx * w * .157, h * .59); ctx.strokeRect(bx, Y(.365), dx * w * .052, h * .27);
+    ctx.beginPath(); ctx.arc(bx + dx * w * .105, Y(.5), h * .135, s ? Math.PI - .87 : -.87, s ? Math.PI + .87 : .87); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(bx + dx * w * .105, Y(.5), 2, 0, 7); ctx.fill();
+    // gol com rede
+    const gx = s ? x0 + w : x0 - 12, gy = Y(.446), gh = h * .108;
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(gx, gy, 12, gh);
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1;
+    for (let k = 3; k < gh; k += 4) { ctx.beginPath(); ctx.moveTo(gx, gy + k); ctx.lineTo(gx + 12, gy + k); ctx.stroke(); }
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeRect(gx, gy, 12, gh); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.85)';
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(X(.5), Y(.5), 2.5, 0, 7); ctx.fill();
+  const S = 18, vis = c.jog.filter(p => p.y > -.12).sort((a, b) => a.y - b.y);
+  for (const p of vis) boneco(ctx, X(p.x), Y(p.y), S, p);
+  // bola
+  const b = c.bola; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(X(b.x) + 1, Y(b.y) + 2, 4, 2, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = '#151a15'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(X(b.x), Y(b.y) - 2, 4.2, 0, 7); ctx.fill(); ctx.stroke();
+  // nome de quem fez o lance
+  if (c.rotulo && c.rotulo.p.y > -.1) {
+    const p = c.rotulo.p, txt = p.nome; ctx.font = '700 12px Barlow, system-ui, sans-serif';
+    const tw = ctx.measureText(txt).width + 12, tx = clamp(X(p.x) - tw / 2, 2, W - tw - 2), ty = Y(p.y) - S * 1.9 - 18;
+    ctx.fillStyle = 'rgba(11,15,12,.88)'; rr(ctx, tx, ty, tw, 18, 6); ctx.fill();
+    ctx.fillStyle = '#ffd21f'; ctx.fillText(txt, tx + 6, ty + 13);
+  }
+  for (const k of c.confete) { ctx.fillStyle = k.cor; ctx.save(); ctx.translate(k.x * W, k.y * H); ctx.rotate(k.r); ctx.fillRect(-3, -1.5, 6, 3); ctx.restore(); }
+}
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function boneco(ctx, X, Y, s, p) {
+  ctx.save(); ctx.translate(X, Y);
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0, 0, s * .42, s * .14, 0, 0, 7); ctx.fill();
+  if (p.caido > 0) { ctx.rotate((p.lado ? -1 : 1) * 1.35); ctx.translate(0, s * .1); }
+  const a = p.mov ? Math.sin(p.f) * s * .22 : 0;
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#151a15'; ctx.lineWidth = s * .17;
+  ctx.beginPath(); ctx.moveTo(-s * .1, -s * .52); ctx.lineTo(-s * .12 + a, 0); ctx.moveTo(s * .1, -s * .52); ctx.lineTo(s * .12 - a, 0); ctx.stroke();
+  ctx.fillStyle = p.cor[1]; ctx.fillRect(-s * .23, -s * .66, s * .46, s * .2);
+  ctx.strokeStyle = p.cor[0]; ctx.lineWidth = s * .14;
+  ctx.beginPath(); ctx.moveTo(-s * .24, -s * 1.0); ctx.lineTo(-s * .38 - a * .4, -s * .7); ctx.moveTo(s * .24, -s * 1.0); ctx.lineTo(s * .38 + a * .4, -s * .7); ctx.stroke();
+  ctx.fillStyle = p.cor[0]; rr(ctx, -s * .26, -s * 1.1, s * .52, s * .5, s * .1); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1; ctx.stroke();
+  if (p.i) { ctx.fillStyle = p.cor[1]; ctx.fillRect(-s * .06, -s * 1.1, s * .12, s * .5); }
+  ctx.fillStyle = p.pele; ctx.beginPath(); ctx.arc(0, -s * 1.3, s * .21, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.stroke();
+  if (p.cartao) { ctx.fillStyle = p.cartao.cor; ctx.strokeStyle = '#151a15'; ctx.fillRect(s * .3, -s * 2.15, s * .38, s * .52); ctx.strokeRect(s * .3, -s * 2.15, s * .38, s * .52); }
+  ctx.restore();
+}
+
+
+function sorteiaCarta() {
+  const g = G;
+  const naFila = g.fila.findIndex(f => f.temp <= g.temp && CARTAS.find(c => c.id === f.id && (!c.c || c.c(g)) && !(c.u && g.usados[c.id] != null)));
+  if (naFila >= 0) { const f = g.fila.splice(naFila, 1)[0]; return CARTAS.find(c => c.id === f.id); }
+  const fato = CARTAS.find(c => c.q === 'fato' && c.c(g) && g.usados[c.id] == null);
+  if (fato) return fato;
+  const pool = CARTAS.filter(c => c.q !== 'fato' && (!c.c || c.c(g)) && !(c.u && g.usados[c.id] != null) &&
+    !(g.usados[c.id] != null && g.temp - g.usados[c.id] < 4) && !c.especial && !['medalhao_lesao', 'joia_explode', 'org_protesto', 'patro_sumiu', 'doc_vazou', 'e_europa_chega'].includes(c.id));
+  const pesos = pool.map(c => typeof c.w === 'function' ? c.w(g) : (c.w ?? 1));
+  let tot = pesos.reduce((a, b) => a + b, 0), x = R() * tot;
+  for (let i = 0; i < pool.length; i++) { x -= pesos[i]; if (x <= 0) return pool[i]; }
+  return pool[pool.length - 1] || CARTAS.find(c => !c.u && c.q !== 'fato' && !c.c);
+}
+let CARTA = null;
+function proximaCarta() {
+  CARTA = sorteiaCarta(); G.usados[CARTA.id] = G.temp; ultimoEfeito = [null, null];
+  const p = PERS[CARTA.q], txt = typeof CARTA.x === 'function' ? CARTA.x(G) : CARTA.x;
+  const nome = typeof p.nome === 'function' ? p.nome(G) : p.nome, papel = typeof p.papel === 'function' ? p.papel(G) : p.papel;
+  const el = $('#carta');
+  el.className = 'carta' + (CARTA.q === 'fato' ? ' fato' : ''); el.style.transform = ''; el.style.opacity = '';
+  el.innerHTML = `<span class="lado esq">${esc(CARTA.o[0].l)}</span><span class="lado dir">${esc(CARTA.o[1].l)}</span>
+    <div class="pessoa">${avatar(p.a, G)}<div><div class="nome">${esc(nome)}</div><div class="papel">${esc(papel)}</div></div></div>
+    ${CARTA.q === 'fato' ? '<span class="tagfato">FATO HISTÓRICO</span>' : ''}<p class="fala">${esc(txt)}</p>`;
+  $('#opE').textContent = '← ' + CARTA.o[0].l; $('#opD').textContent = CARTA.o[1].l + ' →';
+  $('#opE').disabled = $('#opD').disabled = false;
+}
+function efeito(op) { return typeof op.f === 'function' ? op.f(G) : op.f; }
+let ultimoEfeito = [null, null];
+function previa(lado) {
+  document.querySelectorAll('.med .ponto').forEach(p => p.className = 'ponto');
+  if (lado == null || !CARTA) return;
+  const op = CARTA.o[lado];
+  const f = typeof op.f === 'function' ? (ultimoEfeito[lado] = ultimoEfeito[lado] || op.f(G)) : op.f;
+  for (const [k, v] of Object.entries(f || {})) { const pt = document.querySelector(`.med[data-k="${k}"] .ponto`); if (pt && v) pt.className = 'ponto on' + (Math.abs(v) >= 10 ? ' gr' : ''); }
+}
+function escolhe(lado) {
+  if (!CARTA || $('#opE').disabled) return;
+  $('#opE').disabled = $('#opD').disabled = true;
+  const op = CARTA.o[lado];
+  const f = (typeof op.f === 'function' && ultimoEfeito[lado]) ? ultimoEfeito[lado] : efeito(op);
+  ultimoEfeito = [null, null];
+  aplica(f); if (op.a) op.a(G);
+  G.st.decisoes++; G.cartaNaTemp++;
+  previa(null);
+  const el = $('#carta'); el.classList.add('solta'); el.style.transform = `translateX(${lado ? 140 : -140}%) rotate(${lado ? 18 : -18}deg)`; el.style.opacity = '0';
+  $('#toast').textContent = (typeof op.r === 'function' ? op.r(G) : op.r) || '';
+  if (CARTA.especial) G.convite = 0;
+  placa(); lateral();
+  setTimeout(() => {
+    const segue = () => { if (G.cartaNaTemp >= 3) { G.cartaNaTemp = 0; temporada(); } else proximaCarta(); };
+    if (!checaFim(segue)) segue();
+  }, 380 * VEL());
+}
+function aplica(f) {
+  for (const [k, v] of Object.entries(f || {})) {
+    if (!v) continue;
+    const d = v > 0 && (k === 't' || k === 'k' || k === 'c') && G.m[k] >= 82 ? Math.ceil(v / 2) : v; // perto do topo sobe mais devagar
+    G.m[k] = clamp(G.m[k] + d);
+    const el = document.querySelector(`.med[data-k="${k}"]`);
+    if (el) { el.classList.remove('sobe', 'desce'); void el.offsetWidth; el.classList.add(v > 0 ? 'sobe' : 'desce'); }
+  }
+  desenhaMedidores();
+}
+
+/* ===================== TEMPORADA ===================== */
+const FASES_CB = ['1ª fase', '2ª fase', '3ª fase', 'oitavas de final', 'quartas de final', 'semifinal', 'vice-campeão', 'CAMPEÃO'];
+const FASES_LIB = ['fase de grupos', 'oitavas de final', 'quartas de final', 'semifinal', 'vice-campeão', 'CAMPEÃO'];
+function preTemporada(g) {
+  const tr = (g.com.tec && TRACOS[g.com.tec.traco]) || {};
+  const lesoes = rint(0, 6) * (1 - est(g, 'med') / 6);
+  const forca = g.m.e + (est(g, 'tec') - 2.5) * 2.4 + (est(g, 'aux') - 2.5) * 0.8 + (est(g, 'ana') - 2.5) * 0.6 + (tr.f || 0)
+    + (g.flags.ct ? 3 : 0) + (g.flags.gravata ? 2 : 0) + (R() * 24 - 12) - lesoes;
+  const serie = g.serie, queda = serie === 'C' ? 19 : 17;
+  const pos = clamp(Math.round(10.5 - (forca - DIF[serie]) * 0.45 + (R() * 5 - 2.5)), 1, 20);
+  const idxCB = clamp(Math.round(forca / 13 - 'ABCD'.indexOf(serie) * 0.9 + (est(g, 'ana') - 2.5) * 0.3 + (R() * 3 - 1.5) - 0.3), 0, 7);
+  const idxL = g.flags.lib ? clamp(Math.round((forca - 45) / 9 + (est(g, 'ana') - 2.5) * 0.3 + (R() * 2.6 - 1.3) - 0.6), 0, 5) : -1;
+  const pre = { tr, lesoes, forca, serie, pos, idxCB, idxL, jogos: [], feitos: [], extra: { t: 0, c: 0 } };
+  // jogos decisivos, na ordem do calendário: Libertadores, final da Copa do Brasil, última rodada do Brasileiro
+  if (idxL >= 2) pre.jogos.push({ tipo: 'lib', fase: Math.min(idxL, 4) });
+  if (idxCB >= 6) pre.jogos.push({ tipo: 'cb' });
+  if (pos <= 2) pre.jogos.push({ tipo: 'titulo', pos });
+  else if (serie !== 'A' && (pos === 4 || pos === 5)) pre.jogos.push({ tipo: 'acesso', pos });
+  else if (serie === 'A' && (pos === 6 || pos === 7)) pre.jogos.push({ tipo: 'vaga', pos });
+  else if (serie !== 'D' && (pos === queda - 1 || pos === queda)) pre.jogos.push({ tipo: 'queda', pos });
+  return pre;
+}
+function fechaTemporada(g, pre) {
+  const { tr, lesoes, forca, pos, idxCB } = pre, serieAntes = pre.serie;
+  const res = { ano: g.ano, serie: serieAntes, pos, linhas: [], dt: 0, dc: 0, titulos: [], mandato: g.mandato };
+  // campeonato
+  if (pos === 1) { const n = serieAntes === 'A' ? 'Campeão Brasileiro' : `Campeão da Série ${serieAntes}`; res.titulos.push(n); }
+  let destino = serieAntes;
+  if (serieAntes !== 'A' && pos <= 4) { destino = SERIES[SERIES.indexOf(serieAntes) - 1]; res.acesso = 1; g.st.acessos++; }
+  if (serieAntes !== 'D' && pos >= (serieAntes === 'C' ? 19 : 17)) { destino = SERIES[SERIES.indexOf(serieAntes) + 1]; res.rebaixado = 1; g.st.rebaixamentos++; }
+  const libProx = serieAntes === 'A' && pos <= 6;
+  const sub = comp => pre.feitos.filter(f => f.comp === comp).forEach(f => res.linhas.push([f.rot, f.txt, 'sub']));
+  res.linhas.push(['Série ' + serieAntes, `${pos}º lugar${res.acesso ? ' · ACESSO' : ''}${res.rebaixado ? ' · REBAIXADO' : ''}`]); sub('Série ' + serieAntes);
+  // estadual
+  const pEst = clamp((g.m.e - 25) / 110 + (serieAntes === 'A' ? 0.1 : 0), 0.04, 0.55);
+  if (R() < pEst) { res.titulos.push('Campeão Estadual'); res.linhas.push(['Estadual', 'CAMPEÃO']); } else res.linhas.push(['Estadual', pick(['eliminado na semifinal', 'vice-campeão', 'fora das finais'])]);
+  // Copa do Brasil
+  res.linhas.push(['Copa do Brasil', FASES_CB[idxCB]]); sub('Copa do Brasil'); if (idxCB === 7) res.titulos.push('Copa do Brasil');
+  // Libertadores
+  g.flags.libIdx = pre.idxL;
+  if (pre.idxL >= 0) { res.linhas.push(['Libertadores', FASES_LIB[pre.idxL]]); sub('Libertadores'); if (pre.idxL === 5) res.titulos.push('Libertadores'); }
+  g.flags.lib = libProx ? 1 : 0;
+  if (idxCB === 6 || (g.flags.libIdx === 4) || (serieAntes === 'A' && pos === 2)) g.st.vices++;
+  res.jogos = pre.feitos;
+  // clássicos contra o rival (turno e returno)
+  const rf = g.rival.forca + (R() * 10 - 5) - lesoes, cl = { v: 0, e: 0, d: 0, placares: [] };
+  for (let j = 0; j < 2; j++) {
+    const d = forca - rf + (R() * 20 - 10); let a, b;
+    if (d > 7) { a = rint(1, 3); b = rint(0, a - 1); } else if (d < -7) { b = rint(1, 3); a = rint(0, b - 1); } else { a = b = rint(0, 2); }
+    if (d > 16 && R() < 0.4) a += 2;
+    cl.placares.push(`${a}x${b}`); if (a > b) cl.v++; else if (a < b) cl.d++; else cl.e++;
+    if (a - b >= 3) cl.goleada = 1;
+  }
+  g.st.classicos.v += cl.v; g.st.classicos.e += cl.e; g.st.classicos.d += cl.d; res.cl = cl;
+  res.linhas.push([`Clássicos x ${g.rival.nome}`, cl.placares.join(' e ')]);
+  g.rival.forca = clamp(Math.round(g.rival.forca * 0.5 + (g.m.e + (est(g, 'tec') - 2.5) * 2.4 - 1) * 0.5 + rint(-3, 3)), 30, 78); // o rival acompanha o seu nível
+  if (!res.titulos.includes('Campeão Estadual') && R() < clamp((g.rival.forca - 48) / 90, 0.03, 0.28)) { g.rival.ultimoTitulo = g.ano; res.linhas.push(['Rival', `${g.rival.nome} campeão estadual`]); }
+  // efeitos nas barras
+  let dt = pre.extra.t;
+  if (serieAntes === 'A') dt += pos <= 4 ? 10 : pos <= 8 ? 4 : pos >= 17 ? -16 : -3;
+  else dt += pos <= 4 ? 8 : pos >= 15 ? -10 : -3;
+  if (res.acesso) dt += 10; if (res.rebaixado) dt -= 8;
+  dt += (cl.v - cl.d) * 2 + (cl.goleada ? 2 : 0);
+  for (const t of res.titulos) dt += t === 'Campeão Estadual' ? 3 : 8;
+  const receita = { A: 16, B: 9, C: 5, D: 3 }[serieAntes] + (g.flags.estadio ? 4 : 0) + (g.flags.socio ? 3 : 0) + (g.flags.naming ? 3 : 0) + (g.flags.saf ? 4 : 0) + (g.flags.loja ? 2 : 0) + (g.flags.refletores ? 1 : 0)
+    + res.titulos.reduce((s, t) => s + ({ 'Campeão Brasileiro': 10, 'Copa do Brasil': 12, 'Libertadores': 15 }[t] || 2), 0) + (libProx ? 4 : 0);
+  const folha = g.m.e * 0.12 + folhaComissao(g) + (g.flags.feminino ? 2 : 0);
+  let dc = Math.round(receita - folha + (R() * 6 - 3) - (g.ano < 1994 ? 5 : 0)) + pre.extra.c;
+  const de = Math.round(-3 + (est(g, 'fis') - 2.5) * 0.6 + (est(g, 'med') - 2.5) * 0.3 + (est(g, 'bas') - 2.5) * 0.5 + (tr.e || 0) + (g.flags.base ? 2 : 0) + (g.flags.ct ? 2 : 0) - (g.m.c < 15 ? 4 : 0));
+  const dk = (g.m.c >= 50 ? 3 : g.m.c < 20 ? -5 : 0) + (res.titulos.length ? 3 : 0) - (res.rebaixado ? 6 : 0);
+  res.efeito = { t: dt + (tr.t || 0), c: dc, e: de, k: dk };
+  if (lesoes >= 3) res.linhas.push(['Departamento médico', lesoes >= 4.5 ? 'muitas lesões no ano' : 'algumas lesões no ano']);
+  g.serie = destino;
+  g.divida = Math.max(0, Math.round(g.divida + (45 - g.m.c) * 3 - (dc > 0 ? dc * 2 : 0)));
+  res.titulos.forEach(t => titulo(g, t));
+  res.ruim = pos >= 14 || res.rebaixado;
+  if (!g.st.melhor || ('ABCD'.indexOf(serieAntes) * 20 + pos) < ('ABCD'.indexOf(g.st.melhor.serie) * 20 + g.st.melhor.pos)) g.st.melhor = { serie: serieAntes, pos, ano: g.ano };
+  res.manchete = manchete(g, res);
+  return res;
+}
+function manchete(g, r) {
+  const cl = g.clube;
+  if (r.titulos.includes('Libertadores')) return `${cl} conquista a América! Festa até de manhã.`;
+  if (r.titulos.includes('Campeão Brasileiro')) return `É campeão! ${cl} volta ao topo do Brasil.`;
+  if (r.titulos.includes('Copa do Brasil')) return `${cl} levanta a Copa do Brasil e enche o cofre.`;
+  if (r.rebaixado) return `Noite triste: ${cl} cai para a Série ${g.serie}. Torcida protesta na sede.`;
+  if (r.acesso) return `Acesso! ${cl} sobe para a Série ${g.serie} e a cidade para.`;
+  if (r.titulos.length) return `${cl} fatura o estadual. "É só o começo", diz o presidente.`;
+  if (r.pos <= 6 && r.serie === 'A') return `Temporada sólida: ${cl} garante vaga na Libertadores.`;
+  if (r.ruim) return `Ano para esquecer. Oposição já fala em "mudança".`;
+  return `Temporada morna. A torcida quer mais.`;
+}
+function temporada() {
+  const g = G, pre = preTemporada(g);
+  jogaDecisoes(g, pre, () => telaTemporada(g, fechaTemporada(g, pre)));
+}
+function telaTemporada(g, r) {
+  g.ultimo = r; g.hist.unshift(r);
+  const sinal = v => (v > 0 ? '+' : '') + v;
+  mostraTelao(`<span class="k">Fim da temporada ${r.ano}</span>
+    <div class="posicao"><span class="n">${r.pos}º</span><div><b style="font:24px/1 Anton,Impact,sans-serif">Série ${r.serie}</b><br>${r.acesso ? 'Acesso garantido' : r.rebaixado ? 'Rebaixado' : 'Campeonato Brasileiro'}</div></div>
+    <div class="manchete"><small>JORNAL DE AMANHÃ</small>${esc(r.manchete)}</div>
+    <ul class="linhas">${r.linhas.map(([a, b, c]) => `<li${c ? ` class="${c}"` : ''}><span>${esc(a)}</span><span>${esc(b)}</span></li>`).join('')}
+      <li><span>Efeito nas barras</span><span>${METROS.map(([k, n]) => `${n} ${sinal(r.efeito[k])}`).join(' · ')}</span></li></ul>
+    <button class="bt am" id="segue" type="button">${g.anoMandato === 3 ? (g.mandato >= (g.flags.vitalicio ? 8 : 5) ? 'Encerrar a gestão' : 'Ir para a eleição') : 'Próxima temporada'}</button>`, () => {
+    aplica(r.efeito);
+    const segue = () => {
+      g.ano++; g.temp++;
+      const avisos = fimDeAno(g);
+      if (g.anoMandato === 3) { if (g.mandato >= (g.flags.vitalicio ? 8 : 5)) return fim('ciclo'); eleicao(avisos); }
+      else janela(avisos, () => {
+        g.anoMandato++; placa(); lateral(); proximaCarta();
+        if (g.anoMandato === 3 && g.mandato < (g.flags.vitalicio ? 8 : 5)) $('#toast').textContent = `Ano de eleição! A primeira pesquisa te dá ${pesquisa(g)}%. As decisões deste ano mexem nela.`;
+      });
+    };
+    if (!checaFim(segue)) segue();
+  });
+}
+function chanceEleicao(g) {
+  const doMandato = g.hist.filter(r => r.mandato === g.mandato);
+  const tit = doMandato.reduce((s, r) => s + r.titulos.length, 0), reb = doMandato.filter(r => r.rebaixado).length;
+  const cl = doMandato.reduce((s, r) => s + (r.cl ? r.cl.v - r.cl.d : 0), 0);
+  return 0.6 + (g.m.t - 50) / 120 + (g.m.k - 50) / 180 + tit * 0.05 - reb * 0.12 + cl * 0.015 + (g.flags.votoOnline ? 0.02 : 0);
+}
+const pesquisa = g => clamp(Math.round(50 + (chanceEleicao(g) - 0.5) * 70), 5, 95);
+function eleicao(avisos) {
+  const g = G;
+  const pct = clamp(Math.round(50 + (chanceEleicao(g) - 0.5) * 70 + (R() * 8 - 4)), 18, 86);
+  mostraTelao(`<span class="k">Eleição no clube · ${g.ano}</span><h2>${pct > 50 ? 'Reeleito!' : 'A oposição venceu'}</h2>
+    <div class="urna"><i class="voce" style="width:0"></i><i class="opo" style="width:0"></i></div>
+    <div class="legenda"><span>Você ${pct}%</span><span>Oposição ${100 - pct}%</span></div>
+    <p>${pct > 50 ? `Mais três anos à frente do ${esc(g.clube)}. Mandato ${g.mandato + 1}.` : 'Os sócios votaram pela mudança. Você entrega a chave do cofre.'}</p>
+    <button class="bt am" id="segue" type="button">Continuar</button>`, () => {
+    if (pct <= 50) return fim('urnas');
+    g.mandato++; g.anoMandato = 1;
+    janela(avisos, () => { placa(); lateral(); proximaCarta(); });
+  });
+  requestAnimationFrame(() => setTimeout(() => { const u = document.querySelector('.urna'); if (u) { u.children[0].style.width = pct + '%'; u.children[1].style.width = (100 - pct) + '%'; } }, 60));
+}
+
+/* ===================== FINAIS ===================== */
+const FINAIS = {
+  c0: ['FALÊNCIA', 'O clube entra em recuperação judicial e o Conselho afasta você no dia seguinte.'],
+  t0: ['EXPULSO PELA TORCIDA', 'Dez mil pessoas na porta da sede. Você renuncia e sai escoltado pela polícia.'],
+  e0: ['SEM TIME', 'Ninguém mais quer jogar no clube. Você escala o roupeiro no gol e renuncia.'],
+  k0: ['IMPEACHMENT', 'O Conselho Deliberativo aprovou o seu impeachment com mais de dois terços dos votos. Você deixa a sede pela porta dos fundos.'],
+  t100: ['VIROU POLÍTICO', 'Com 100% de aprovação, um partido te convida para disputar uma vaga de deputado. Você deixa o clube nos braços da torcida.'],
+  k100: ['PRESIDENTE VITALÍCIO', 'O Conselho, encantado, aprova mandato vitalício. A imprensa chama de "monarquia".'],
+  urnas: ['DERROTADO NAS URNAS', 'A oposição venceu a eleição do clube.'],
+  ciclo: ['FIM DE CICLO', 'Todos os mandatos que o estatuto permite, cumpridos. Você sai pela porta da frente, para o bem ou para o mal.'],
+  // duas barras no máximo ao mesmo tempo: a carreira acaba com uma história
+  ct100: ['PRESIDENTE DA CONFEDERAÇÃO', 'Cofre cheio e torcida em festa: as federações te elegem para comandar o futebol do país. Você deixa o clube para cuidar da Seleção (e das polêmicas da arbitragem).'],
+  ce100: ['VENDEU O FUTEBOL DO CLUBE', 'Um fundo bilionário comprou o futebol do clube, de olho no cofre cheio e no elenco estrelado. Você sai rico, e com fama eterna de quem vendeu o clube.'],
+  ck100: ['CONTRATADO PELO MERCADO', 'Um banco gigante contratou o gestor que encheu o cofre e encantou o Conselho. Você troca o estádio por uma sala de vidro no 40º andar.'],
+  te100: ['SAIU POR CIMA', 'Com o elenco e a torcida aos seus pés, você anuncia a despedida no auge. Agora tem uma estátua de bronze na porta do estádio (o nariz ficou estranho).'],
+  tk100: ['VIROU SAMBA-ENREDO', 'Sua gestão virou enredo de escola de samba. Depois de desfilar no carro abre-alas, você conclui que nada vai superar aquela noite e se despede do clube.'],
+  ek100: ['VIROU TÉCNICO', 'O elenco pediu e o Conselho aprovou: você largou a presidência para comandar o time à beira do campo. Primeiro treino: dois toques e rachão.'],
+  tudo100: ['GESTÃO PERFEITA', 'Cofre, torcida, elenco e conselho no máximo ao mesmo tempo. Você vira livro, palestra e documentário, e se aposenta sem mais nada a provar.'],
+};
+const PLANTOES = {
+  ct100: ['federacao', c => `Presidente do ${c} é eleito para comandar a Confederação`, 'O futebol do país precisa de alguém que encha o cofre e o estádio ao mesmo tempo. As federações já fecharam o seu nome.'],
+  ce100: ['investidor', c => `Fundo estrangeiro compra o futebol do ${c}`, 'Cofre saudável, elenco de estrelas: é o ativo perfeito. Pagamos o dobro do que vale, mas a cadeira de presidente agora é nossa.'],
+  ck100: ['cacatalentos', c => `Banco contrata o presidente do ${c} como diretor executivo`, 'O senhor arrumou as contas e conquistou o Conselho mais difícil do país. No banco vai ser moleza. O salário tem mais zeros que o seu placar.'],
+  te100: ['capitao', c => `Carregado pelos jogadores, presidente do ${c} se despede no auge`, 'Presidente, o vestiário inteiro está com o senhor e a arquibancada canta o seu nome. Melhor que isso não fica. Sai agora e vira estátua.'],
+  tk100: ['carnavalesco', c => `Escola de samba leva a gestão do ${c} para a avenida`, 'O enredo é o senhor, presidente! Abre-alas com o escudo do clube, ala dos conselheiros e bateria vestida de torcida.'],
+  ek100: ['craque', c => `Presidente do ${c} deixa o cargo para virar técnico`, 'Presidente, o grupo decidiu: o senhor entende mais de bola que todo mundo aqui. O Conselho já aprovou. Pega a prancheta!'],
+  tudo100: ['jornalista', c => `Gestão perfeita: ${c} tem tudo no máximo e o presidente se aposenta`, 'Em trinta anos de redação nunca vi isso: dinheiro, torcida, time e Conselho no topo ao mesmo tempo. Qual é o segredo?'],
+};
+const NOMEMETRO = Object.fromEntries(METROS);
+function plantao(tipo, cheios) {
+  const g = G, [quem, manchete, fala] = PLANTOES[tipo], p = PERS[quem], [tit, desc] = FINAIS[tipo];
+  const nome = typeof p.nome === 'function' ? p.nome(g) : p.nome, papel = typeof p.papel === 'function' ? p.papel(g) : p.papel;
+  const barras = cheios.map(k => NOMEMETRO[k].toLowerCase()), lista = barras.length > 2 ? barras.slice(0, -1).join(', ') + ' e ' + barras.at(-1) : barras.join(' e ');
+  mostraTelao(`<span class="k">Plantão esportivo · ${g.ano}</span>
+    <div class="manchete"><small>URGENTE</small>${esc(manchete(g.clube))}</div>
+    <div class="plantao">${avatar(p.a, g)}<div><b>${esc(nome)}</b><small>${esc(papel)}</small><p>"${esc(fala)}"</p></div></div>
+    <h2>${tit}</h2><p>${esc(desc)}</p>
+    <p class="nota">${barras.length > 2 ? 'Barras' : 'Duas barras'} no máximo ao mesmo tempo: ${esc(lista)} em 100.</p>
+    <button class="bt am" id="segue" type="button">Ver o fim da gestão</button>`, () => fim(tipo));
+}
+function impeachment(segue) {
+  const g = G, ja = g.flags.impeach === g.mandato;
+  const tit = g.hist.filter(r => r.mandato === g.mandato).reduce((s, r) => s + r.titulos.length, 0);
+  let p = clamp(0.22 + (g.m.t - 50) / 160 + (g.m.c - 40) / 260 + tit * 0.06, 0.05, 0.55); if (ja) p /= 3;
+  const fica = R() < p, abst = rint(2, 14), sim = fica ? rint(150, 199) : rint(200, 268), nao = 300 - sim - abst;
+  const c = PERS.conselheiro;
+  mostraTelao(`<span class="k">Conselho Deliberativo · sessão extraordinária · ${g.ano}</span>
+    <h2>${fica ? 'Impeachment rejeitado!' : 'Impeachment aprovado'}</h2>
+    <div class="plantao">${avatar(c.a, g)}<div><b>${esc(c.nome)}</b><small>${esc(c.papel)}</small><p>"O Conselho perdeu a confiança no presidente. Está aberto o processo de impeachment: são 300 conselheiros, e para afastar precisa de dois terços, 200 votos."</p></div></div>
+    <div class="urna imp"><i class="sim" style="width:0"></i><i class="nao" style="width:0"></i><b class="corte" style="left:66.67%" aria-hidden="true"></b></div>
+    <div class="legenda"><span>Pelo afastamento: ${sim}</span><span>Contra: ${nao}</span></div>
+    <p class="nota" style="margin-top:4px">${abst} abstenções. A linha branca marca os 200 votos.</p>
+    <p>${fica ? `Faltaram ${200 - sim} votos. Você sobrevive e o Conselho volta a 12, mas fica de olho${ja ? '' : ': um segundo processo neste mandato dificilmente falha'}.` : 'Você deixa a sede pela porta dos fundos, com a imprensa toda na garagem.'}</p>
+    <button class="bt am" id="segue" type="button">${fica ? 'Voltar ao trabalho' : 'Ver o fim da gestão'}</button>`, () => {
+    if (!fica) return fim('k0');
+    g.flags.impeach = g.mandato; g.m.k = 12; desenhaMedidores(); placa(); lateral();
+    if (segue) segue();
+    $('#toast').textContent = `Escapou do impeachment por ${200 - sim} votos. Conselho em 12: cuidado.`;
+  });
+  requestAnimationFrame(() => setTimeout(() => { const u = document.querySelector('.urna.imp'); if (u) { u.children[0].style.width = (sim / 3) + '%'; u.children[1].style.width = (nao / 3) + '%'; } }, 60));
+}
+function checaFim(segue) {
+  const m = G.m;
+  if (G.fimForcado) { fim(G.fimForcado); return true; }
+  for (const k of ['c', 't', 'e']) if (m[k] <= 0) { fim(k + '0'); return true; }
+  if (m.k <= 0) { impeachment(segue); return true; } // conselho zerado: votação de impeachment
+  // duas (ou mais) barras no máximo: a carreira termina com uma história
+  const cheios = ['c', 't', 'e', 'k'].filter(k => m[k] >= 100);
+  if (cheios.length === 4) { plantao('tudo100', cheios); return true; }
+  if (cheios.length >= 2) { plantao(cheios.slice(0, 2).join('') + '100', cheios); return true; }
+  // torcida ou conselho em 100: em vez de acabar, chega um convite (a escolha é do jogador)
+  if (!G.convite && m.t >= 100) { G.convite = 1; G.fila.unshift({ id: 'convite_politico', temp: G.temp }); }
+  else if (!G.convite && m.k >= 100) { G.convite = 1; G.fila.unshift({ id: 'convite_vitalicio', temp: G.temp }); }
+  return false;
+}
+function placar(g) {
+  const pesos = { 'Libertadores': 40, 'Campeão Brasileiro': 32, 'Copa do Brasil': 22, 'Campeão da Série B': 10, 'Campeão da Série C': 7, 'Campeão da Série D': 5, 'Campeão Estadual': 4, 'Brasileiro Feminino': 8 };
+  let n = 0; for (const t of g.st.titulos) n += pesos[t.replace(/ \d{4}$/, '')] || 3;
+  n += g.st.acessos * 8 - g.st.rebaixamentos * 14 + (g.ano - g.ano0) * 2 + (g.serie === 'A' ? 6 : 0) - Math.max(0, (g.divida - g.divida0) / 60);
+  if (['ciclo', 't100', 'k100'].includes(g.fim)) n += 8;
+  if (/^(ct|ce|ck|te|tk|ek)100$/.test(g.fim)) n += 12; if (g.fim === 'tudo100') n += 25;
+  return Math.round(n);
+}
+/* faixas calibradas com 960 gestões simuladas (jogadas aleatórias e jogadas cuidadosas) */
+function raridade(p) { return p >= 240 ? ['LENDÁRIA', 'top 1% das gestões'] : p >= 180 ? ['HISTÓRICA', 'top 5%'] : p >= 65 ? ['BOA', 'top 25%'] : p >= 7 ? ['MEDIANA', 'na média'] : ['DESASTROSA', 'entre as 40% piores']; }
+function apelido(g) {
+  const s = g.st, tt = s.titulos.join('|'), cnt = re => s.titulos.filter(t => re.test(t)).length;
+  const grandes = cnt(/Libertadores|Brasileiro 1|Brasileiro 2|Copa do Brasil|Mundial/), lib = cnt(/Libertadores/), bra = cnt(/Campeão Brasileiro/), cb = cnt(/Copa do Brasil/);
+  const estaduais = cnt(/Estadual/), anos = g.ano - g.ano0, cl = s.classicos, rv = g.rival.nome;
+  const regras = [
+    [g.fim === 'tudo100', 'O Perfeito'], [/Mundial/.test(tt), 'O Campeão do Mundo'], [grandes >= 3, 'O Lendário'], [lib >= 1, 'O Rei da América'], [bra >= 2, 'O Bicampeão'],
+    [s.rebaixamentos >= 2 && s.acessos >= 2, 'O Ioiô'], [s.rebaixamentos >= 3 || (s.rebaixamentos >= 2 && !s.acessos), 'O Coveiro'], [cl.v - cl.d >= 5, `Carrasco do ${rv}`], [cl.d - cl.v >= 5, `Freguês do ${rv}`],
+    [s.tecnicos >= 6, 'Demitidor Serial'], [s.acessos >= 2, 'O Rei do Acesso'], [cb >= 1 && !bra, 'O Copeiro'], [bra === 1, 'O Campeão Brasileiro'],
+    [g.fim === 'ek100', 'O Professor'], [g.fim === 'tk100', 'O Sambista'], [g.fim === 'ct100', 'O Cartola-Mor'], [g.fim === 'ck100', 'O Executivo'],
+    [g.fim === 'te100', 'O Imortal'], [g.fim === 'ce100', 'O Homem do Fundo'], [g.fim === 'k0', 'O Impichado'],
+    [g.fim === 't100', 'O Populista'], [g.fim === 'k100', 'O Monarca'], [anos <= 1, 'O Relâmpago'], [s.vices >= 2, 'O Quase'],
+    [s.melhorContratacao && s.melhorContratacao.est >= 4.5, 'O Caça-Estrelas'], [s.gringos >= 2, 'O Importador'], [g.flags.saf && anos >= 4, 'O Homem da SAF'],
+    [estaduais >= 2, 'O Rei do Estadual'], [s.organizada >= 3, 'Amigo da Organizada'], [s.tecnicos === 0 && anos >= 6, 'O Fiel'],
+    [s.vendas >= 2, 'O Vendedor'], [s.contratacoes >= 6, 'O Contratador'], [g.divida > g.divida0 * 2 + 100, 'O Gastador'],
+    [g.m.c >= 75 && !s.titulos.length, 'O Mão de Vaca'], [anos >= 9 && !s.titulos.length, 'O Pé-Frio'], [s.rebaixamentos === 1, 'O do Rebaixamento'],
+    [g.fim === 'urnas' && anos <= 3, 'O Breve'], [s.acessos === 1, 'O do Acesso'], [!s.rebaixamentos && anos >= 6, 'O Equilibrista'],
+  ];
+  const r = regras.find(([cond]) => cond);
+  return r ? r[1] : 'O Burocrata';
+}
+let ultimoTexto = '', ultimaImg = null;
+function fim(tipo) {
+  const g = G; g.fim = tipo;
+  const [tit, desc] = FINAIS[tipo];
+  const anos = `${g.ano0}–${Math.max(g.ano, g.ano0)}`, ap = apelido(g), pts = placar(g), [rar, rarTxt] = raridade(pts);
+  const grandes = g.st.titulos.length;
+  // recordes
+  const rec = guarda.ler('recordes', { gestoes: 0, melhor: null });
+  rec.gestoes++; if (!rec.melhor || pts > rec.melhor.pts) rec.melhor = { pts, ap, clube: g.clube }; guarda.gravar('recordes', rec);
+  if (g.diario) { const d = guarda.ler('diario', {}); if (!d[g.diario] || pts > d[g.diario].pts) d[g.diario] = { pts, ap, tit }; guarda.gravar('diario', d); }
+  ultimoTexto = `MANDACHUVA · Gestão de ${g.nome} no ${g.clube} (${anos})\n${tit} · apelido da torcida: "${ap}"\n` +
+    `🏆 ${grandes} títulos · 👔 ${g.st.tecnicos} técnicos demitidos · ⬆️ ${g.st.acessos} acessos · ⬇️ ${g.st.rebaixamentos} rebaixamentos · 💸 dívida R$ ${g.divida} mi\n` +
+    `⚔️ Clássicos contra o ${g.rival.nome}: ${g.st.classicos.v}V ${g.st.classicos.e}E ${g.st.classicos.d}D\n` +
+    (g.st.decisivas.j ? `🏟️ Jogos decisivos: ${g.st.decisivas.v} vencidos de ${g.st.decisivas.j}\n` : '') +
+    (g.st.melhorContratacao ? `⭐ Melhor contratação: ${g.st.melhorContratacao.nome} (${fmtE(g.st.melhorContratacao.est)} estrelas)\n` : '') +
+    `Gestão ${rar}${g.diario ? ` · Desafio do dia ${g.diario.split('-').reverse().join('/')}` : ''}\nFaz melhor?`;
+  mostraTelao(`<span class="k">${esc(g.clube)} · ${anos}</span><h2>${tit}</h2><p>${esc(desc)}</p>
+    <p><span class="raridade">GESTÃO ${rar}</span> <span style="opacity:.8">${rarTxt}</span></p>
+    <p style="font:22px/1.1 Anton,Impact,sans-serif;margin:12px 0 4px;letter-spacing:.3px">Apelido da torcida: <span style="color:var(--amarelo)">"${esc(ap)}"</span></p>
+    <div class="grade-fim">
+      <div><b>${grandes}</b>títulos</div><div><b>${g.st.tecnicos}</b>técnicos demitidos</div><div><b>${g.ano - g.ano0}</b>anos no cargo</div>
+      <div><b>${g.st.acessos}</b>acessos</div><div><b>${g.st.rebaixamentos}</b>rebaixamentos</div><div><b>${g.divida}</b>dívida (R$ mi)</div>
+    </div>
+    <p style="font-size:14px"><b>Clássicos contra o ${esc(g.rival.nome)}:</b> ${g.st.classicos.v} vitórias, ${g.st.classicos.e} empates, ${g.st.classicos.d} derrotas</p>
+    ${g.st.decisivas.j ? `<p style="font-size:14px"><b>Jogos decisivos:</b> ${g.st.decisivas.v} vencidos de ${g.st.decisivas.j}.${g.st.decisivas.marcante ? ` Inesquecível: ${esc(g.st.decisivas.marcante.txt)}.` : ''}</p>` : ''}
+    ${g.st.melhorContratacao ? `<p style="font-size:14px"><b>Melhor contratação:</b> ${esc(g.st.melhorContratacao.nome)}, ${g.st.melhorContratacao.cargo.toLowerCase()} ${estrelas(g.st.melhorContratacao.est)} (${g.st.melhorContratacao.ano})</p>` : ''}
+    ${g.st.titulos.length ? `<p style="font-size:14px"><b>Títulos:</b> ${esc(g.st.titulos.join(' · '))}</p>` : ''}
+    <div class="linha-tempo"><ul class="lista">${g.hist.slice().reverse().map(r => `<li><b>${r.ano}</b><span>${r.pos}º na Série ${r.serie}${r.acesso ? ', acesso' : ''}${r.rebaixado ? ', rebaixado' : ''}${r.titulos.length ? ' · ' + esc(r.titulos.join(', ')) : ''}</span></li>`).join('') || '<li>Não chegou ao fim da primeira temporada.</li>'}</ul></div>
+    <img class="cartao-final" id="imgFinal" alt="Card da sua gestão para compartilhar">
+    <div class="acoes" style="margin-top:0"><button class="bt am" id="btCopiar" type="button">Copiar resultado</button><button class="bt cl" id="btSalvar" type="button">Salvar imagem</button><button class="bt vz" id="btDeNovo" type="button">Nova gestão</button></div>
+    <p id="msgFim" class="nota"></p><textarea class="copia oculto" id="txtCopia" readonly></textarea>`, null);
+  desenhaCard(g, { tit, anos, ap, rar }).then(url => { const i = $('#imgFinal'); if (i) i.src = url; });
+  $('#btCopiar').onclick = async () => {
+    try { await navigator.clipboard.writeText(ultimoTexto); $('#msgFim').textContent = 'Copiado. É só colar no X, no WhatsApp ou na legenda.'; }
+    catch (e) { const t = $('#txtCopia'); t.classList.remove('oculto'); t.value = ultimoTexto; t.select(); $('#msgFim').textContent = 'Seu navegador não deixou copiar sozinho: selecione o texto abaixo.'; }
+  };
+  $('#btSalvar').onclick = salvaImagem;
+  $('#btDeNovo').onclick = () => { fechaTelao(); voltaInicio(); };
+}
+
+/* ===================== CARD PARA COMPARTILHAR ===================== */
+async function desenhaCard(g, d) {
+  try { await document.fonts.load('80px Anton'); await document.fonts.load('700 30px Barlow'); } catch (e) {}
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
+  for (let i = 0; i < 12; i++) { x.fillStyle = i % 2 ? '#0c6235' : '#0f6d3c'; x.fillRect(i * 90, 0, 90, H); }
+  x.fillStyle = g.cores[0]; x.fillRect(0, 0, W, 300); x.fillStyle = g.cores[1]; x.fillRect(0, 300, W, 14);
+  x.fillStyle = g.cores[1]; x.font = '96px Anton, Impact, sans-serif'; x.textBaseline = 'top'; x.fillText('MANDACHUVA', 64, 60);
+  x.font = '700 40px Barlow, sans-serif'; x.fillText(`${g.nome} · ${g.clube}`.slice(0, 40), 64, 180); x.font = '600 34px Barlow, sans-serif'; x.fillText(d.anos, 64, 232);
+  x.fillStyle = '#fbf8ef'; roundRect(x, 64, 370, W - 128, 860, 32); x.fill();
+  x.fillStyle = '#151a15'; cabe(x, d.tit, W - 208, 74); x.fillText(d.tit, 104, 420);
+  x.fillStyle = '#5c645a'; x.font = '700 32px Barlow, sans-serif'; x.fillText('APELIDO DA TORCIDA', 104, 560);
+  x.fillStyle = '#151a15'; cabe(x, `"${d.ap}"`, W - 208, 84); x.fillText(`"${d.ap}"`, 104, 600);
+  x.fillStyle = '#5c645a'; x.font = '700 30px Barlow, sans-serif'; x.fillText(`Clássicos x ${g.rival.nome}: ${g.st.classicos.v}V ${g.st.classicos.e}E ${g.st.classicos.d}D`, 104, 706);
+  const nums = [[g.st.titulos.length, 'títulos'], [g.st.tecnicos, 'técnicos demitidos'], [g.st.rebaixamentos, 'rebaixamentos'], [g.st.acessos, 'acessos'], [g.ano - g.ano0, 'anos no cargo'], [g.divida, 'dívida R$ mi']];
+  nums.forEach(([n, l], i) => { const cx = 104 + (i % 3) * 300, cy = 760 + Math.floor(i / 3) * 190; x.fillStyle = '#efe9da'; roundRect(x, cx, cy, 270, 160, 20); x.fill();
+    x.fillStyle = '#151a15'; x.font = '72px Anton, Impact, sans-serif'; x.fillText(String(n), cx + 24, cy + 16); x.fillStyle = '#5c645a'; x.font = '700 28px Barlow, sans-serif'; x.fillText(l, cx + 24, cy + 106); });
+  x.fillStyle = '#ffd21f'; roundRect(x, 104, 1150, 420, 56, 28); x.fill(); x.fillStyle = '#151a15'; x.font = '700 30px Barlow, sans-serif'; x.fillText(`GESTÃO ${d.rar}`, 128, 1163);
+  x.fillStyle = '#fbf8ef'; x.font = '700 34px Barlow, sans-serif'; x.fillText('Faz melhor? Jogue o Mandachuva.', 64, 1268);
+  ultimaImg = cv; return cv.toDataURL('image/png');
+}
+function cabe(x, t, w, tam) { do { x.font = `${tam}px Anton, Impact, sans-serif`; tam -= 4; } while (x.measureText(t).width > w && tam > 30); }
+function roundRect(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+function quebra(x, t, a, b, w, lh) { let linha = '', y = b; for (const p of t.split(' ')) { const tst = linha ? linha + ' ' + p : p; if (x.measureText(tst).width > w && linha) { x.fillText(linha, a, y); linha = p; y += lh; } else linha = tst; } x.fillText(linha, a, y); }
+async function salvaImagem() {
+  if (!ultimaImg) return;
+  const blob = await new Promise(r => ultimaImg.toBlob(r, 'image/png'));
+  const nomeArq = 'minha-gestao-mandachuva.png';
+  if (window.claude && window.claude.use) {
+    try { const dl = await window.claude.use('downloads'); if (dl) { await dl.save({ filename: nomeArq, data: blob }); $('#msgFim').textContent = 'Imagem salva.'; return; } }
+    catch (e) { if (e && e.code === 'declined') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nomeArq; document.body.appendChild(a); a.click(); a.remove();
+  $('#msgFim').textContent = 'Se o download não começou, segure o dedo sobre a imagem para salvar.';
+}
+
+/* ===================== TELA ===================== */
+function desenhaMedidores() {
+  const box = $('#medidores');
+  if (!box.children.length) box.innerHTML = METROS.map(([k, n]) => `<div class="med" data-k="${k}"><div class="ico">${ICONES[k]}${ICONES[k].replace('<svg', '<svg class="cheio"')}</div><div class="barra"><i></i></div>${n}<div class="ponto"></div></div>`).join('');
+  for (const [k] of METROS) { const el = box.querySelector(`[data-k="${k}"]`); el.style.setProperty('--v', G.m[k]); el.classList.toggle('perigo', G.m[k] <= 18 || G.m[k] >= 92); el.title = `${G.m[k]} de 100`; }
+}
+function placa() {
+  if (G) { const cheios = ['c', 't', 'e', 'k'].filter(k => G.m[k] >= 100);
+    if (cheios.length === 1 && G.avisoMax !== cheios[0]) { G.avisoMax = cheios[0]; $('#toast').textContent = ($('#toast').textContent + ` ${NOMEMETRO[cheios[0]]} no máximo! Se outra barra chegar lá, sua carreira vira história.`).trim(); } }
+  const g = G;
+  $('#placa').innerHTML = `<span class="clube">${escudo(g.cores[0], g.cores[1])}${esc(g.clube)}</span>
+    <span class="chip">Série ${g.serie}</span><span class="chip">${g.ano}</span><span class="chip">Mandato ${g.mandato}${g.flags.vitalicio ? '' : ' de 5'} · ano ${g.anoMandato}/3</span>
+    <span class="chip">Decisão ${Math.min(g.cartaNaTemp + 1, 3)}/3 da temporada</span>
+    <span class="chip">Rival: ${esc(g.rival.nome)} · ${g.st.classicos.v}V ${g.st.classicos.e}E ${g.st.classicos.d}D</span>
+    ${g.anoMandato === 3 && g.mandato < (g.flags.vitalicio ? 8 : 5) ? (p => `<span class="chip pesq ${p >= 55 ? 'boa' : p >= 47 ? 'meio' : 'ruim'}">Eleição no fim do ano · pesquisa: você ${p}%</span>`)(pesquisa(g)) : ''}${g.diario ? '<span class="chip" style="background:var(--amarelo);color:var(--tinta)">Desafio do dia</span>' : ''}`;
+}
+function lateral() {
+  const g = G;
+  $('#numeros').innerHTML = `<div><b>${g.st.titulos.length}</b>títulos</div><div><b>${g.st.tecnicos}</b>técnicos demitidos</div><div><b>${g.divida}</b>dívida R$ mi</div>`;
+  $('#comissaoLat').innerHTML = CARGOS.map(([k, n]) => `<li><span>${n}${!g.com[k] ? ' <em>(vago)</em>' : ''}</span>${estrelas(est(g, k))}</li>`).join('');
+  $('#historico').innerHTML = g.hist.length ? g.hist.map(r => `<li><b>${r.ano}</b><span>${r.pos}º · Série ${r.serie}${r.acesso ? ' · acesso' : ''}${r.rebaixado ? ' · rebaixado' : ''}${r.titulos.length ? ' · ' + esc(r.titulos.join(', ')) : ''}</span></li>`).join('')
+    : `<li><b>${g.ano}</b><span>Posse do presidente ${esc(g.nome)}. Técnico: ${esc(g.tecnico.nome)}.</span></li>`;
+}
+let aoFechar = null;
+function mostraTelao(html, depois, largo) {
+  const t = $('#telao'), y = t.scrollTop, aberto = !t.classList.contains('oculto') && largo;
+  $('#painel').innerHTML = html; $('#painel').classList.toggle('largo', !!largo); $('#painel').classList.toggle('jogo-largo', largo === 'jogo'); t.classList.remove('oculto'); aoFechar = depois;
+  const b = $('#segue'); if (b) b.onclick = () => { fechaTelao(); if (aoFechar) aoFechar(); };
+  if (aberto) t.scrollTop = y; else { t.scrollTop = 0; if (b && !largo) setTimeout(() => b.focus({ preventScroll: true }), 50); }
+}
+function fechaTelao() { $('#telao').classList.add('oculto'); }
+function voltaInicio() { $('#telaJogo').classList.add('oculto'); $('#telaInicio').classList.remove('oculto'); G = null; atualizaInicio(); window.scrollTo(0, 0); }
+
+/* arrastar a ficha */
+{
+  const el = $('#carta'); let x0 = null, dx = 0;
+  el.addEventListener('pointerdown', e => { if ($('#opE').disabled) return; x0 = e.clientX; dx = 0; el.setPointerCapture(e.pointerId); el.classList.remove('solta'); el.style.cursor = 'grabbing'; });
+  el.addEventListener('pointermove', e => {
+    if (x0 == null) return; dx = e.clientX - x0;
+    el.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+    const l = el.querySelector('.lado.esq'), r = el.querySelector('.lado.dir');
+    if (l) l.style.opacity = dx < -20 ? Math.min(1, -dx / 90) : 0; if (r) r.style.opacity = dx > 20 ? Math.min(1, dx / 90) : 0;
+    previa(dx < -20 ? 0 : dx > 20 ? 1 : null);
+  });
+  const solta = () => {
+    if (x0 == null) return; x0 = null; el.style.cursor = '';
+    if (Math.abs(dx) > 90) escolhe(dx > 0 ? 1 : 0);
+    else { el.classList.add('solta'); el.style.transform = ''; el.querySelectorAll('.lado').forEach(s => s.style.opacity = 0); previa(null); }
+  };
+  el.addEventListener('pointerup', solta); el.addEventListener('pointercancel', solta);
+  $('#opE').onclick = () => escolhe(0); $('#opD').onclick = () => escolhe(1);
+  for (const [id, lado] of [['#opE', 0], ['#opD', 1]]) { const b = $(id); b.onmouseenter = b.onfocus = () => previa(lado); b.onmouseleave = b.onblur = () => previa(null); }
+  document.addEventListener('keydown', e => {
+    if (!G || !$('#telao').classList.contains('oculto')) return;
+    if (e.key === 'ArrowLeft') escolhe(0); if (e.key === 'ArrowRight') escolhe(1);
+  });
+}
+
+/* ===================== TELA INICIAL ===================== */
+const CFG = { cores: CORES[0], cen: 'medio', ano: 2027 };
+function atualizaCena() { $('#cena').innerHTML = cenaColetiva($('#inNome').value, $('#inClube').value || 'Clube', CFG.cores[0], CFG.cores[1]); }
+function atualizaInicio() {
+  $('#cores').innerHTML = CORES.map((c, i) => `<button type="button" class="cor" style="background:${c[1]}" aria-label="Cores ${i + 1}" aria-pressed="${CFG.cores === c}" data-i="${i}"><i style="background:${c[0]}"></i></button>`).join('');
+  $('#cenarios').innerHTML = Object.entries(CENARIOS).map(([k, c]) => `<button type="button" class="opc" aria-pressed="${CFG.cen === k}" data-c="${k}"><span><b>${c.nome}</b><small>${c.desc}</small></span></button>`).join('');
+  $('#epocas').innerHTML = Object.entries(EPOCAS).map(([a, d]) => `<button type="button" class="opc" aria-pressed="${CFG.ano === +a}" data-a="${a}"><b>${a}</b><small>${d}</small></button>`).join('');
+  document.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { CFG.cores = CORES[+b.dataset.i]; atualizaInicio(); });
+  document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { CFG.cen = b.dataset.c; atualizaInicio(); });
+  document.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { CFG.ano = +b.dataset.a; atualizaInicio(); });
+  const rec = guarda.ler('recordes', null), dia = guarda.ler('diario', {})[hoje()];
+  $('#recorde').innerHTML = (rec ? `Suas gestões: ${rec.gestoes} · melhor: "${esc(rec.melhor.ap)}" no ${esc(rec.melhor.clube)} (${rec.melhor.pts} pts).` : 'Protótipo: ' + CARTAS.filter(c => !c.especial).length + ' cartas de decisão, ' + CARTAS.filter(c => c.q === 'fato').length + ' com fatos históricos.')
+    + (dia ? ` Desafio de hoje: "${esc(dia.ap)}", ${dia.pts} pts.` : '');
+  atualizaCena();
+}
+$('#inNome').oninput = $('#inClube').oninput = atualizaCena;
+$('#form').onsubmit = e => { e.preventDefault(); novoJogo({ nome: $('#inNome').value.trim(), clube: $('#inClube').value.trim(), cores: CFG.cores, cen: CFG.cen, ano: CFG.ano }); };
+$('#btDiario').onclick = () => {
+  const d = hoje(), s = hashTxt('mandachuva' + d), r = mulberry(s);
+  const cens = Object.keys(CENARIOS), cen = cens[Math.floor(r() * cens.length)], clube = CLUBES_DIA[Math.floor(r() * CLUBES_DIA.length)], cores = CORES[Math.floor(r() * CORES.length)];
+  novoJogo({ nome: $('#inNome').value.trim(), clube, cores, cen, ano: 2027, seed: s, diario: d });
+};
+$('#btComo').onclick = () => mostraTelao(`<span class="k">Como jogar</span><h2>Você é o mandachuva</h2>
+  <ul class="linhas"><li><span>Decisões</span><span>Arraste a ficha ou toque num botão. Os pontos amarelos mostram quais barras vão mexer (ponto grande = mexe muito).</span></li>
+  <li><span>Barras</span><span>Caixa, torcida, elenco e conselho. Zerou uma, você cai. Se o conselho zerar, tem votação de impeachment: precisa de 2/3 para te derrubar.</span></li>
+  <li><span>Duas no máximo</span><span>Se duas barras chegarem a 100% ao mesmo tempo, a carreira termina com uma história. São 6 finais diferentes, um para cada dupla, e um secreto.</span></li>
+  <li><span>Temporada</span><span>A cada 3 decisões o campeonato roda: Série, estadual, Copa do Brasil e, se classificado, Libertadores.</span></li>
+  <li><span>Eleição</span><span>A cada 3 temporadas. Torcida, conselho e títulos contam votos.</span></li>
+  <li><span>Jogos decisivos</span><span>Final da Copa do Brasil, mata-mata da Libertadores e última rodada valendo título, acesso ou queda: assista ao vivo ou veja só o resultado. No intervalo, você pode falar com o grupo.</span></li>
+  <li><span>Rival</span><span>Dois clássicos por ano. O placar acumulado aparece no topo e no card final.</span></li>
+  <li><span>Pesquisa</span><span>No ano da eleição aparece a sua intenção de voto. Ela muda a cada decisão.</span></li>
+  <li><span>Convites</span><span>Se a torcida ou o conselho chegarem a 100%, chega um convite: virar político ou presidente vitalício. A escolha é sua.</span></li>
+  <li><span>Comissão</span><span>Seis cargos, de 0,5 a 5 estrelas. Entre as temporadas, renove, demita ou contrate. Quem tem mais estrelas que o prestígio do clube costuma recusar.</span></li>
+  <li><span>Desafio do dia</span><span>O mesmo clube e a mesma sorte para todo mundo, para comparar com os amigos.</span></li></ul>
+  <button class="bt am" id="segue" type="button">Bora</button>`, null);
+atualizaInicio();
+window.__mc = { escolhe: l => escolhe(l), G: () => G, novoJogo, carta: () => CARTA, placar, apelido, telao: () => !$('#telao').classList.contains('oculto'),
+  checa: segue => checaFim(segue),
+  jogo: j => { const g = G, pre = preTemporada(g); pre.jogos = [j]; jogaDecisoes(g, pre, () => telaTemporada(g, fechaTemporada(g, pre))); } };
+}
+</script>
+</body>
+</html>
