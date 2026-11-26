@@ -17,6 +17,10 @@ Jogo de navegador em que você é o presidente de um clube de futebol. Cada deci
 
 É um arquivo só (`index.html`), sem servidor e sem cadastro. O recorde e o desafio do dia ficam salvos no próprio navegador (localStorage).
 
+## Visitas
+
+O site usa o [GoatCounter](https://www.goatcounter.com), contador gratuito que não usa cookies. O painel fica em https://mandachuva.goatcounter.com e mostra visitas, de onde as pessoas vieram e alguns eventos do jogo: `jogo-iniciado`, `jogo-iniciado-desafio-do-dia`, `fim-<tipo de final>`, `assistiu-jogo-decisivo`, `copiou-resultado` e `salvou-imagem`.
+
 ## Publicação
 
 O site é publicado pelo GitHub Pages a partir da branch `main`, pasta raiz. Para atualizar o jogo, basta trocar o `index.html`.
